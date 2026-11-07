@@ -2,7 +2,7 @@ from streamlit.testing.v1 import AppTest
 
 
 def test_configuration_screen(monkeypatch):
-    monkeypatch.delenv('VAULT_MASTER_KEY', raising=False)
+    monkeypatch.setenv('VAULT_MASTER_KEY', '')
     app = AppTest.from_file('app.py').run()
     assert not app.exception
     assert app.title[0].value == 'CipherVault'
