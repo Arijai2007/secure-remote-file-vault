@@ -28,6 +28,8 @@ Provision WireGuard on a Linux server using the official distribution packages a
 
 After the VPN interface is up, set `VAULT_BIND_IP=10.8.0.1` in `.env` and recreate the app container. Reach the app at `http://10.8.0.1:8501` while connected through WireGuard. Use a TLS reverse proxy and secure WebSocket forwarding for a stronger deployment. Verify externally that public TCP 8501 is unreachable. Docker can bypass some host firewall arrangements; binding to the explicit VPN address is necessary, and the effective host/provider rules must also be checked. Do not forward public TCP 8501.
 
+Starter configuration templates are in `deploy/wireguard/`. Replace every placeholder. Generate each device's private/public key pair with WireGuard's `wg genkey` / `wg pubkey` tools locally, and exchange only public keys. These templates route only traffic to the vault server, so general internet forwarding/NAT is unnecessary. Start the server tunnel before the Docker container so that the bind address exists.
+
 The repository does not claim to install or provision a VPN automatically: server keys, peer enrollment, network routing and firewall verification require the actual server environment.
 
 ## Presentation walkthrough

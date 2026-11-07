@@ -1,0 +1,10 @@
+# Import privately into the client's WireGuard application.
+[Interface]
+Address = 10.8.0.2/32
+PrivateKey = REPLACE_WITH_CLIENT_PRIVATE_KEY
+
+[Peer]
+PublicKey = REPLACE_WITH_SERVER_PUBLIC_KEY
+Endpoint = REPLACE_WITH_SERVER_HOSTNAME:51820
+AllowedIPs = 10.8.0.1/32
+PersistentKeepalive = 25
