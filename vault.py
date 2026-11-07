@@ -238,7 +238,10 @@ class Vault:
         return file_id
 
     def download(self, token, file_id):
-        user = self.require(token, ('Admin', 'Employee'), 'download', file_id)
+        return self._read_file(token, file_id, 'download')
+
+    def _read_file(self, token, file_id, action):
+        user = self.require(token, ('Admin', 'Employee'), action, file_id)
         error = None
         result = None
         with self.db() as db:
@@ -255,7 +258,7 @@ class Vault:
                     result = (row['name'], data)
                 except (ValueError, InvalidTag):
                     error = 'Integrity verification failed. Download blocked.'
-            self.audit(db, user['username'], 'download', file_id, 'denied' if error else 'allowed')
+            self.audit(db, user['username'], action, file_id, 'denied' if error else 'allowed')
         if error:
             raise VaultError(error)
         return result
@@ -265,6 +268,68 @@ class Vault:
         with self.db() as db:
             db.execute('DELETE FROM files WHERE id=?', (file_id,))
             self.audit(db, user['username'], 'delete', file_id)
+
+    def set_shared(self, token, file_id, shared):
+        user = self.require(token, ('Admin', 'Employee'), 'change_sharing', file_id)
+        error = None
+        with self.db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT owner FROM files WHERE id=?', (file_id,)).fetchone()
+            if row is None or (user['role'] != 'Admin' and row['owner'] != user['id']):
+                error = 'Only the owner or an administrator can change sharing.'
+            else:
+                db.execute('UPDATE files SET shared=? WHERE id=?', (int(bool(shared)), file_id))
+            self.audit(db, user['username'], 'share_file' if shared else 'unshare_file',
+                       file_id, 'denied' if error else 'allowed')
+        if error:
+            raise VaultError(error)
+
+    def verify(self, token, file_id):
+        # Verification uses the same decryption and authorization path as download,
+        # but returns no plaintext to the caller.
+        name, data = self._read_file(token, file_id, 'verify_integrity')
+        return {'name': name, 'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+
+    def activity(self, token, limit=30):
+        user = self.user(token)
+        limit = max(1, min(int(limit), 1000))
+        with self.db() as db:
+            return [dict(r) for r in db.execute(
+                "SELECT * FROM audit WHERE ?='Admin' OR actor=? ORDER BY id DESC LIMIT ?",
+                (user['role'], user['username'], limit))]
+
+    def security_summary(self, token):
+        user = self.user(token)
+        with self.db() as db:
+            now = time.time()
+            denied = db.execute("SELECT count(*) FROM audit WHERE at>? AND outcome='denied' "
+                                "AND (?='Admin' OR actor=?)", (now - 86400, user['role'], user['username'])).fetchone()[0]
+            sessions = db.execute('SELECT count(*) FROM sessions s JOIN users u ON s.user_id=u.id '
+                                  "WHERE s.expires>? AND u.active=1 AND (?='Admin' OR u.id=?)",
+                                  (now, user['role'], user['id'])).fetchone()[0]
+            expiry = db.execute('SELECT expires FROM sessions WHERE token=?', (self.token_hash(token),)).fetchone()[0]
+        public = self.private.public_key().public_bytes(serialization.Encoding.DER,
+                                                       serialization.PublicFormat.SubjectPublicKeyInfo)
+        return {'denied_24h': denied, 'active_sessions': sessions, 'expires': expiry,
+                'key_fingerprint': hashlib.sha256(public).hexdigest()}
+
+    def own_sessions(self, token):
+        user = self.user(token)
+        current = self.token_hash(token)
+        with self.db() as db:
+            rows = db.execute('SELECT token,expires FROM sessions WHERE user_id=? AND expires>? ORDER BY expires DESC',
+                              (user['id'], time.time())).fetchall()
+        return [{'fingerprint': r['token'][:12], 'created': r['expires'] - 1800,
+                 'expires': r['expires'], 'current': r['token'] == current} for r in rows]
+
+    def revoke_other_sessions(self, token):
+        user = self.user(token)
+        with self.db() as db:
+            cursor = db.execute('DELETE FROM sessions WHERE user_id=? AND token!=?',
+                                (user['id'], self.token_hash(token)))
+            count = cursor.rowcount
+            self.audit(db, user['username'], 'revoke_other_sessions', str(count))
+        return count
 
     def logs(self, token):
         user = self.require(token, ('Admin',), 'view_audit')

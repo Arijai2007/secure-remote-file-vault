@@ -1,5 +1,27 @@
 # Deployment and demonstration
 
+## Choose a host
+
+| Host | Fit for this implementation |
+|---|---|
+| Streamlit Community Cloud | Easy free demonstration; local files/accounts are not durable |
+| Render with a paid persistent disk | Good match for this single-instance Python/SQLite app with durable storage |
+| Render free service | Demonstration only; local files are lost on restart/redeploy/spindown |
+| Vercel | Better for a separately designed frontend/API with external durable storage; this app currently runs as a Streamlit server |
+| VPS + Docker + WireGuard | Best way to demonstrate the synopsis's complete VPN-only network layer |
+
+Streamlit is the UI framework; Community Cloud and Render are hosting choices. You can run the same Streamlit UI on Render or a VPS without rewriting it.
+
+Sources: [Render persistent disks](https://render.com/docs/disks), [Render free service limits](https://render.com/docs/free), [Streamlit local storage](https://docs.streamlit.io/develop/concepts/connections/connecting-to-data), [Vercel Python runtime](https://vercel.com/docs/functions/runtimes/python).
+
+## Render with persistent storage (optional paid deployment)
+
+The repository includes `render.yaml`. Create a Blueprint in Render from this repository, inspect the proposed compute and disk costs, and then deploy if you choose to pay for this hosting. The Blueprint selects the `0.5c-512mb` paid compute plan, a 1 GB disk mounted at `/var/data`, Python 3.13, generated secrets, and a Streamlit health check. No Render service is created simply by committing this file.
+
+The app writes its SQLite database and encrypted file contents to `/var/data/cipher-vault`. After deployment, retrieve the bootstrap token from your service's environment settings and initialize your administrator in the app. Securely back up the generated master key. Do not regenerate it after storing data.
+
+This creates a **new** empty vault. Existing Community Cloud accounts/files are not migrated automatically. Migrating an existing vault requires a consistent database backup and the exact original master key; do not copy a new generated key over an existing database. Keep one running instance with this SQLite/disk design. Render handles HTTPS, but a public Render URL does not add the VPN layer.
+
 ## Streamlit Community Cloud
 
 1. Sign in at https://share.streamlit.io/ using the GitHub account that owns this repository.

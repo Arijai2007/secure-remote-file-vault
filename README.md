@@ -2,6 +2,8 @@
 
 A working Python / Streamlit cybersecurity project implementing password + TOTP MFA, server-side RBAC, hybrid encryption, integrity verification and audit logs. Based on the Secure Remote File Vault synopsis for Computer and Cyber Security Fundamentals, JIIT Noida.
 
+**Live demonstration:** https://cipher-vault-arihant.streamlit.app/
+
 ## Run locally
 
 ```powershell
@@ -27,10 +29,17 @@ Read the bootstrap token from the newly created, ignored `.streamlit/secrets.tom
 - GCM authentication and SHA-256 plaintext verification before download; modified files are blocked.
 - SQLite stores encrypted file blobs and metadata transactionally. No filesystem paths are taken from uploads.
 - Audit dashboard and CSV export; search; storage metrics; account management; no external analytics.
+- Refreshed light workspace with a dark green sidebar, responsive file cards, dashboard file-type chart, and role-scoped recent activity.
+- Search by filename/owner; filter by type, ownership and sharing; sort and paginate large file lists.
+- Owners and administrators can change file sharing. Integrity can be verified separately from downloading.
+- Account page lists active sessions and signs out other sessions. Security center displays a stable public-key fingerprint and the access policy.
+- Filter audit events by actor, outcome and action; CSV exports escape spreadsheet formula prefixes.
 
 ## Deployment
 
 See [deployment instructions](docs/DEPLOYMENT.md) for Streamlit Community Cloud and persistent Docker/WireGuard deployment. Community Cloud is suitable for a presentation/demo: its local disk is ephemeral and it does not provide VPN-only application access. The Docker deployment is the route for demonstrating the full VPN layer and durable storage.
+
+An optional `render.yaml` Blueprint configures a paid Python service with a 1 GB persistent disk, generated secret values and a health check. It is not automatically provisioned. Review the current price in Render before creating it. A new Blueprint starts a new vault; existing files/accounts are not automatically migrated.
 
 ## Test
 
