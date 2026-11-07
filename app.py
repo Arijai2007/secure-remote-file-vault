@@ -10,7 +10,8 @@ import qrcode
 import streamlit as st
 
 from ui import (activity_item, banner, empty_state, eyebrow, file_heading,
-                file_kind, format_size, load_styles, protection_card)
+                file_kind, format_size, load_styles, protection_card, brand,
+                signin_art, workspace_identity, inspector_metadata)
 from vault import Vault, VaultError
 
 st.set_page_config(page_title='CipherVault | Secure Remote File Vault', page_icon='🔐', layout='wide')
@@ -90,10 +91,11 @@ def csv_export(rows, fields):
     return output.getvalue()
 
 
-st.title('CipherVault')
-st.caption('SECURE FILE WORKSPACE')
+if 'token' not in st.session_state:
+    brand()
 master = config('VAULT_MASTER_KEY')
 if not master:
+    st.title('CipherVault')
     banner('WORKSPACE SETUP', 'A secure home for your files.',
            'A private workspace for your team’s documents, protected by layered security.')
     st.info('Your workspace is almost ready. The deployer needs to configure its private encryption secrets.')
@@ -131,7 +133,7 @@ if vault.is_empty():
                     password = st.text_input('Password (12+ characters)', type='password')
                     confirm = st.text_input('Confirm password', type='password')
                     code = st.text_input('Authenticator code', max_chars=6, placeholder='000000')
-                    submitted = st.form_submit_button('Create secure workspace', type='primary', use_container_width=True)
+                    submitted = st.form_submit_button('Create secure workspace', type='primary', width='stretch')
                 if submitted:
                     try:
                         if password != confirm:
@@ -160,28 +162,25 @@ if vault.is_empty():
     st.stop()
 
 if 'token' not in st.session_state:
-    banner('YOUR TEAM’S TRUSTED WORKSPACE', 'Keep important things private.',
-           'A calmer way to manage sensitive files. Encrypted storage, deliberate access and a record of every action.')
-    left, right = st.columns([1, 1], gap='large')
+    left, right = st.columns([1.35, 1], gap='large')
     with left:
-        st.subheader('Welcome back')
-        st.caption('Use your password and an unused authenticator code to continue.')
-        with st.form('signin'):
-            username = st.text_input('Username', placeholder='Your workspace username')
-            password = st.text_input('Password', type='password')
-            code = st.text_input('6-digit authenticator code', max_chars=6, placeholder='000000')
-            login = st.form_submit_button('Unlock your workspace', type='primary', use_container_width=True)
-        if login:
-            try:
-                st.session_state.token = vault.login(username, password, code)
-                st.rerun()
-            except VaultError as exc:
-                st.error(str(exc))
+        signin_art()
     with right:
-        eyebrow('PROTECTED AT EVERY STEP')
-        protection_card('IDENTITY', 'Two factors. One secure sign-in.', 'Your password and a fresh authenticator code protect access to your account.')
-        protection_card('CONFIDENTIALITY', 'Encrypted before it is stored.', 'Every file has a unique encryption key. Integrity is checked before a download.')
-        st.caption('Need access or lost your authenticator? Contact your workspace administrator.')
+        with st.container(key='signin-panel'):
+            with st.form('signin'):
+                st.subheader('Unlock Workspace')
+                st.caption('Verify your password and authenticator to continue. Session lifetime: 30 minutes.')
+                username = st.text_input('Username', placeholder='Your workspace username')
+                password = st.text_input('Password', type='password', placeholder='Enter your password')
+                code = st.text_input('6-digit authenticator code', max_chars=6, placeholder='000000')
+                login = st.form_submit_button('Unlock your workspace', type='primary', width='stretch')
+                st.caption('Lost credentials or authenticator? Contact your workspace administrator. Self-service signup is disabled.')
+            if login:
+                try:
+                    st.session_state.token = vault.login(username, password, code)
+                    st.rerun()
+                except VaultError as exc:
+                    st.error(str(exc))
     footer()
     st.stop()
 
@@ -196,8 +195,7 @@ except VaultError as exc:
     st.stop()
 
 with st.sidebar:
-    st.html('<div class="brand-line"><div class="brand-symbol">◇</div><div><div class="brand-word">CipherVault</div>'
-            '<div class="brand-sub">PRIVATE WORKSPACE</div></div></div>')
+    brand()
     pages = ['Overview', 'File vault', 'My account', 'Security guide']
     if user['role'] == 'Admin':
         pages = ['Overview', 'File vault', 'Team access', 'Audit trail', 'My account', 'Security guide']
@@ -206,10 +204,12 @@ with st.sidebar:
     st.write(user['username'])
     st.caption(user['role'] + ' · Two-factor authenticated')
     st.caption('Sessions automatically expire after 30 minutes.')
-    if st.button('Lock & sign out', use_container_width=True):
+    if st.button('Lock & sign out', width='stretch'):
         vault.logout(token)
         st.session_state.clear()
         st.rerun()
+
+workspace_identity(user['username'], user['role'])
 
 if 'notice' in st.session_state:
     st.toast(st.session_state.pop('notice'), icon=':material/check_circle:')
@@ -235,14 +235,14 @@ try:
             if files:
                 st.dataframe([{'File': f['name'], 'Owner': f['uploaded_by'], 'Size': format_size(f['size']),
                                'Access': 'Team shared' if f['shared'] else 'Private'} for f in files[:6]],
-                             hide_index=True, use_container_width=True)
+                             hide_index=True, width='stretch')
             else:
                 empty_state('A fresh start for your files', 'Your permitted uploads will appear here. Open File vault to get started.')
             eyebrow('FILE MIX')
             if files:
                 kinds = sorted({file_kind(f['name']) for f in files})
                 st.bar_chart({'Type': kinds, 'Files': [sum(file_kind(f['name']) == k for f in files) for k in kinds]},
-                             x='Type', y='Files', color='#40856b', height=190)
+                             x='Type', y='Files', color='#22d3ee', height=190)
             else:
                 st.caption('Your file type breakdown appears after your first upload.')
         with side:
@@ -258,7 +258,15 @@ try:
 
     elif page == 'File vault':
         st.header('File vault')
-        st.caption('A place for every document. Encrypted on arrival, verified on the way out.')
+        st.caption('Encrypted on arrival. Verified on the way out.')
+        a, b, c, d = st.columns(4)
+        a.metric('Accessible objects', len(files))
+        b.metric('Original file content', format_size(sum(f['size'] for f in files)))
+        c.metric('Team shared', sum(bool(f['shared']) for f in files))
+        d.metric('Private objects', sum(not f['shared'] for f in files))
+        st.info(f"Security profile: {user['role']} · " +
+                ('Shared metadata access. File content is restricted.' if user['role'] == 'Guest' else
+                 'Downloads authenticate AES-GCM content and verify its SHA-256 digest.'))
         if user['role'] in ('Admin', 'Employee'):
             with st.expander('Upload a file', icon=':material/upload_file:', expanded=not files):
                 with st.form('upload', clear_on_submit=True):
@@ -288,35 +296,75 @@ try:
         st.caption(f'{len(matches)} files · {format_size(sum(f["size"] for f in matches))} of file content')
         if not matches:
             empty_state('No files in this view', 'Try a different search or filter, or add your first file.')
-        total_pages = max(1, math.ceil(len(matches) / 8))
-        current_page = st.selectbox('Page', list(range(1, total_pages + 1)), format_func=lambda p: f'{p} of {total_pages}') if total_pages > 1 else 1
-        for f in matches[(current_page - 1) * 8:current_page * 8]:
-            with st.container(border=True):
-                file_heading(f['name'], file_kind(f['name']), f['shared'])
-                st.caption(f"{format_size(f['size'])} · Added by {f['uploaded_by']} · {time_label(f['created'])}")
-                if user['role'] != 'Guest':
-                    buttons = st.columns([1, 1, 2])
-                    if buttons[0].button('Prepare download', key='prepare'+f['id'], use_container_width=True, icon=':material/download:'):
-                        name, data = vault.download(token, f['id'])
-                        st.download_button('Save verified file', data, file_name=name, mime='application/octet-stream',
-                                           key='download'+f['id'], on_click='ignore', type='primary')
-                    if buttons[1].button('Verify integrity', key='verify'+f['id'], use_container_width=True, icon=':material/verified_user:'):
-                        vault.verify(token, f['id'])
-                        st.success('Integrity verified. Authentication tag and SHA-256 both match.')
-                with st.expander('File details & access'):
-                    st.caption('SHA-256 fingerprint')
-                    st.code(f['digest'], language=None)
-                    st.caption('AES-256-GCM · RSA-3072 OAEP · File ID: ' + f['id'])
-                    if user['role'] == 'Admin' or (user['role'] == 'Employee' and f['owner'] == user['id']):
-                        st.caption('Sharing changes affect future access. Previously downloaded copies cannot be recalled.')
-                        if st.button('Make private' if f['shared'] else 'Share with team', key='share'+f['id']):
-                            vault.set_shared(token, f['id'], not f['shared'])
-                            toast('File sharing updated.')
-                    if user['role'] == 'Admin':
-                        confirm = st.checkbox('I understand deletion is permanent', key='confirm'+f['id'])
-                        if st.button('Delete file permanently', key='delete'+f['id'], disabled=not confirm):
-                            vault.delete(token, f['id'])
-                            toast('Encrypted file deleted.')
+        tools = st.columns([1, 1, 2])
+        if user['role'] != 'Guest':
+            if tools[0].button('Batch verify SHA-256', disabled=not matches, icon=':material/verified_user:'):
+                verified = 0
+                for item in matches:
+                    try:
+                        vault.verify(token, item['id'])
+                        verified += 1
+                    except VaultError as exc:
+                        st.error(f"{item['name']}: {exc}")
+                if verified:
+                    st.success(f'{verified} verified · {len(matches) - verified} failed. Checked current filtered files.')
+        if tools[1].button('Refresh manifest', icon=':material/refresh:'):
+            st.rerun()
+        listing, inspector = st.columns([1.8, 1], gap='large')
+        with listing:
+            with st.container(key='file-list'):
+                total_pages = max(1, math.ceil(len(matches) / 8))
+                current_page = st.selectbox('Page', list(range(1, total_pages + 1)), format_func=lambda p: f'{p} of {total_pages}') if total_pages > 1 else 1
+                for f in matches[(current_page - 1) * 8:current_page * 8]:
+                    with st.container(border=True, key='file-card-'+f['id']):
+                        file_heading(f['name'], file_kind(f['name']), f['shared'])
+                        st.caption(f"{format_size(f['size'])} · Added by {f['uploaded_by']} · {time_label(f['created'])}")
+                        if user['role'] != 'Guest':
+                            buttons = st.columns(2)
+                            if buttons[0].button('Prepare download', key='prepare'+f['id'], width='stretch', icon=':material/download:'):
+                                name, data = vault.download(token, f['id'])
+                                st.download_button('Save verified file', data, file_name=name, mime='application/octet-stream',
+                                                   key='download'+f['id'], on_click='ignore', type='primary')
+                            if buttons[1].button('Verify integrity', key='verify'+f['id'], width='stretch', icon=':material/verified_user:'):
+                                vault.verify(token, f['id'])
+                                st.success('Integrity verified. Authentication tag and SHA-256 both match.')
+                        with st.expander('File details & access'):
+                            st.caption('SHA-256 fingerprint')
+                            st.code(f['digest'], language=None)
+                            st.caption('AES-256-GCM · RSA-3072 OAEP · File ID: ' + f['id'])
+                            if user['role'] == 'Admin' or (user['role'] == 'Employee' and f['owner'] == user['id']):
+                                st.caption('Sharing changes affect future access. Previously downloaded copies cannot be recalled.')
+                                if st.button('Make private' if f['shared'] else 'Share with team', key='share'+f['id']):
+                                    vault.set_shared(token, f['id'], not f['shared'])
+                                    toast('File sharing updated.')
+                            if user['role'] == 'Admin':
+                                confirm = st.checkbox('I understand deletion is permanent', key='confirm'+f['id'])
+                                if st.button('Delete file permanently', key='delete'+f['id'], disabled=not confirm):
+                                    vault.delete(token, f['id'])
+                                    toast('Encrypted file deleted.')
+
+        with inspector:
+            with st.container(key='crypto-inspector'):
+                if matches:
+                    selected_id = st.selectbox('Inspect file', [f['id'] for f in matches],
+                                               format_func=lambda fid: next(f['name'] for f in matches if f['id'] == fid))
+                    selected = next(f for f in matches if f['id'] == selected_id)
+                    inspector_metadata(selected, time_label(selected['created']))
+                    st.caption('SHA-256 checksum · recorded at upload')
+                    st.code(selected['digest'], language=None)
+                    st.caption('Access scope: ' + ('Team shared' if selected['shared'] else 'Private'))
+                    if user['role'] != 'Guest':
+                        if st.button('Verify selected file', key='inspector-verify', width='stretch', icon=':material/verified_user:'):
+                            vault.verify(token, selected_id)
+                            st.success('Verified now: GCM authentication and SHA-256 match.')
+                        if st.button('Prepare selected download', key='inspector-download', type='primary', width='stretch'):
+                            name, data = vault.download(token, selected_id)
+                            st.download_button('Save selected verified file', data, file_name=name,
+                                               mime='application/octet-stream', on_click='ignore', key='inspector-save')
+                    st.caption('Previously downloaded copies cannot be recalled by changing access.')
+                else:
+                    st.subheader('Cryptographic Inspector')
+                    st.caption('Choose a file from your accessible results to inspect its encryption metadata.')
         if user['role'] == 'Guest':
             st.info('You have metadata-only access. Ask your administrator if your work requires downloads.')
 
@@ -332,7 +380,7 @@ try:
         with people:
             query = st.text_input('Find a team member', placeholder='Search usernames…')
             st.dataframe([{'Username': u['username'], 'Role': u['role'], 'Status': 'Active' if u['active'] else 'Deactivated'}
-                          for u in users if query.casefold() in u['username'].casefold()], hide_index=True, use_container_width=True)
+                          for u in users if query.casefold() in u['username'].casefold()], hide_index=True, width='stretch')
             other_users = [u for u in users if u['id'] != user['id']]
             if other_users:
                 st.subheader('Manage account access')
@@ -373,7 +421,7 @@ try:
                     and (outcome == 'All outcomes' or r['outcome'] == outcome)
                     and (action == 'All actions' or r['action'] == action)]
         display = [dict(r, at=time_label(r['at'])) for r in filtered]
-        st.dataframe(display, hide_index=True, use_container_width=True)
+        st.dataframe(display, hide_index=True, width='stretch')
         st.download_button('Export filtered audit CSV', csv_export(display, ['id', 'at', 'actor', 'action', 'target', 'outcome']),
                            'cipher-vault-audit.csv', 'text/csv', icon=':material/download:')
         st.caption('A denied event is an access decision, not proof of an attack. Server operators can modify local audit records.')
@@ -389,7 +437,7 @@ try:
         sessions = vault.own_sessions(token)
         st.dataframe([{'Session': 'This session' if s['current'] else 'Another session',
                        'Reference': s['fingerprint'], 'Signed in': time_label(s['created']),
-                       'Expires': time_label(s['expires'])} for s in sessions], hide_index=True, use_container_width=True)
+                       'Expires': time_label(s['expires'])} for s in sessions], hide_index=True, width='stretch')
         st.caption('Sessions expire 30 minutes after sign-in. Device names and IP addresses are not collected.')
         if st.button('Sign out all other sessions', disabled=len(sessions) <= 1, icon=':material/devices:'):
             count = vault.revoke_other_sessions(token)

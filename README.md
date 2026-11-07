@@ -29,7 +29,9 @@ Read the bootstrap token from the newly created, ignored `.streamlit/secrets.tom
 - GCM authentication and SHA-256 plaintext verification before download; modified files are blocked.
 - SQLite stores encrypted file blobs and metadata transactionally. No filesystem paths are taken from uploads.
 - Audit dashboard and CSV export; search; storage metrics; account management; no external analytics.
-- Refreshed light workspace with a dark green sidebar, responsive file cards, dashboard file-type chart, and role-scoped recent activity.
+- Stitch-inspired navy workspace with cyan/violet accents, responsive file cards, a cryptographic inspector, dashboard file-type chart, and role-scoped recent activity.
+- Animated Three.js sign-in vault, bundled locally with pause, reduced-motion support and a WebGL fallback.
+- Batch integrity verification of filtered files, per-file failure reporting, and manifest refresh.
 - Search by filename/owner; filter by type, ownership and sharing; sort and paginate large file lists.
 - Owners and administrators can change file sharing. Integrity can be verified separately from downloading.
 - Account page lists active sessions and signs out other sessions. Security center displays a stable public-key fingerprint and the access policy.
@@ -49,6 +51,8 @@ python -m pytest -q
 ```
 
 Tests exercise encryption round trips and restart, ciphertext/key/hash/nonce tampering, all three roles, cross-account isolation, denied-action logging, OTP replay, lockout, logout, expiry, deactivation, encrypted seeds, wrong master keys and initial UI rendering. GitHub Actions runs the tests on every push and pull request.
+
+UI regression tests also cover filtered inspector selection, mixed successful/failed batch verification and guest metadata-only controls. See [the design notes](DESIGN.md) for the supplied design's adaptation and bundled asset licenses.
 
 ## Architecture
 
