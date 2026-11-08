@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-07T20:08:11.902522+00:00",
+  "title": "Design System: CipherVault",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas"
+      },
+      "nav": {
+        "role": "neutral",
+        "displayName": "Nav"
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel"
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted"
+      },
+      "cyan": {
+        "role": "primary",
+        "displayName": "Cyan"
+      },
+      "violet": {
+        "role": "secondary",
+        "displayName": "Violet"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border"
+      },
+      "success": {
+        "role": "neutral",
+        "displayName": "Success"
+      },
+      "danger": {
+        "role": "neutral",
+        "displayName": "Danger"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Sign-in display",
+        "purpose": "Sign-in story heading."
+      },
+      "mono": {
+        "displayName": "Cryptographic metadata",
+        "purpose": "Code, protocol names and cryptographic values; tabular numerals."
+      }
+    },
+    "motion": [
+      {
+        "name": "control-transition",
+        "value": "180ms ease-out",
+        "purpose": "Background and border transitions; disabled for reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "1000px"
+      },
+      {
+        "name": "narrow",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Native-widget visual treatment; actual padding is supplied by Streamlit.",
+      "html": "<button class=\"ds-button\">Verify integrity</button>",
+      "css": ".ds-button { font-family:Inter,sans-serif;border-radius:8px;min-height:2.65rem;font-weight:600;border:1px solid var(--border,#30394e);background:var(--raised,#252a39);color:var(--ink,#dee2f6);transition:background 180ms ease-out,border-color 180ms ease-out; }.ds-button:focus-visible { outline:2px solid var(--cyan,#22d3ee);outline-offset:3px; }@media(prefers-reduced-motion:reduce){.ds-button{transition:none;}}.ds-button:hover { border-color:#65d9ed;color:#a2eeff;background:#27374c; }.ds-button:disabled { opacity:.45;cursor:not-allowed; }"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "description": "Gradient action treatment; form submit uses a taller minimum height.",
+      "html": "<button class=\"ds-button ds-primary\">Unlock workspace</button>",
+      "css": ".ds-button { font-family:Inter,sans-serif;border-radius:8px;min-height:2.65rem;font-weight:600;border:1px solid var(--border,#30394e);background:var(--raised,#252a39);color:var(--ink,#dee2f6);transition:background 180ms ease-out,border-color 180ms ease-out; }.ds-button:focus-visible { outline:2px solid var(--cyan,#22d3ee);outline-offset:3px; }@media(prefers-reduced-motion:reduce){.ds-button{transition:none;}}.ds-primary { background:linear-gradient(105deg,#16cbe6,#8aebff 65%,#d0bcff);color:#00252e;border:0; }.ds-primary:hover { filter:brightness(1.08);color:#001f25; }"
+    },
+    {
+      "name": "Text input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Field treatment with visible placeholder and keyboard focus.",
+      "html": "<input class=\"ds-input\" aria-label=\"Search files\" placeholder=\"Search files\">",
+      "css": ".ds-input{font-family:Inter,sans-serif;background:var(--nav,#090e1c);color:var(--ink,#dee2f6);border:1px solid var(--border,#30394e);border-radius:9px;caret-color:var(--cyan,#22d3ee);}.ds-input::placeholder{color:#96a5ba;opacity:1;}.ds-input:focus-visible { outline:2px solid var(--cyan,#22d3ee);outline-offset:3px; }"
+    },
+    {
+      "name": "Sidebar navigation",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Native radio selection translated into a standalone preview.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><label><input type=\"radio\" name=\"ds-nav\" checked> File Vault</label><label><input type=\"radio\" name=\"ds-nav\"> Activity</label></nav>",
+      "css": ".ds-nav{background:var(--nav,#090e1c);color:var(--ink,#dee2f6);font-family:Inter,sans-serif;}.ds-nav label{display:block;padding:.65rem .8rem;border-radius:8px;transition:background 180ms ease-out;}.ds-nav label:hover{background:#172239;}.ds-nav label:has(input:checked){background:var(--cyan,#22d3ee);color:#00252e;font-weight:600;}.ds-nav input:focus-visible { outline:2px solid var(--cyan,#22d3ee);outline-offset:3px; }@media(prefers-reduced-motion:reduce){.ds-nav label{transition:none;}}"
+    },
+    {
+      "name": "Sharing badges",
+      "kind": "chip",
+      "description": "Descriptive status labels, not interactive controls.",
+      "html": "<span class=\"ds-badge ds-team\">Team shared</span> <span class=\"ds-badge ds-private\">Private</span>",
+      "css": ".ds-badge{display:inline-block;border-radius:20px;padding:4px 8px;font-family:Inter,sans-serif;font-size:.65rem;white-space:nowrap;}.ds-team{color:#e0d2ff;background:#382469;}.ds-private{color:#a2eeff;background:#163b4b;}"
+    },
+    {
+      "name": "File card surface",
+      "kind": "card",
+      "refersTo": "file-card",
+      "description": "Panel surface and file-heading treatment; Streamlit supplies native container spacing.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-heading\"><h3>Project brief.pdf</h3><span>Document</span></div></article>",
+      "css": ".ds-card{background:var(--panel,#1a1f2e);border:1px solid var(--border,#30394e);border-radius:16px;}.ds-heading{padding:.3rem 0 .7rem;}.ds-heading h3{font-family:\"Space Grotesk\",sans-serif;color:var(--ink,#dee2f6);letter-spacing:-.025em;font-size:1.05rem;margin:0 0 3px;overflow-wrap:anywhere;}.ds-heading span{font-family:Inter,sans-serif;font-size:.7rem;color:var(--muted,#a6b4ca);}"
+    }
+  ],
+  "narrative": {
+    "overview": "The visual authority is the user-supplied `stitch_ciphervault_ui_design_system.zip`: the File Vault and animated Sign In / Unlock screens. This implementation adapts the export to native Streamlit controls and real vault data. Navy surfaces, cyan actions, violet accents, geometric headings and monospaced cryptographic metadata carry the supplied identity. No additional creative metaphor is established.\n\nThe sign-in illustration and workspace lock artwork carry the vault motif; working controls stay native Streamlit widgets. Sources of truth are `ui.css`, `ui.py`, `.streamlit/config.toml` and the layout in `app.py`. Product and security facts remain in `README.md` and `vault.py`.",
+    "keyCharacteristics": [
+      "Dark tonal layers with cyan interaction emphasis.",
+      "Rounded file cards, inset metadata and a separate cryptographic inspector.",
+      "Locally bundled type and an isolated animated sign-in vault.",
+      "Role-aware controls and truthful verification states."
+    ],
+    "rules": [],
+    "dos": [
+      "Do preserve the supplied navy/cyan/violet identity and established font roles.",
+      "Do retain native Streamlit actions and escaped file metadata.",
+      "Do describe SHA-256 values as upload metadata until live verification succeeds.",
+      "Do apply batch verification to all matching filtered files and report individual failures; keep guest controls metadata-only.",
+      "Do share these tokens and native widget styling across bootstrap, overview, account, team access, audit and security pages.",
+      "Do preserve local asset licenses, animation controls and the WebGL fallback."
+    ],
+    "donts": [
+      "Don't restore mockup sample users, a role switcher or artificial integrity badges.",
+      "Don't introduce unsupported hardware-enclave, FIPS or zero-knowledge claims; authentication and cryptography remain implemented by `vault.py`.",
+      "Don't treat the decorative vault scene as a security boundary or pass credentials or vault data into it."
+    ]
+  }
+}

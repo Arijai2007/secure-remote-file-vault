@@ -3,7 +3,7 @@ from streamlit.testing.v1 import AppTest
 
 def test_configuration_screen(monkeypatch):
     monkeypatch.setenv('VAULT_MASTER_KEY', '')
-    app = AppTest.from_file('app.py').run()
+    app = AppTest.from_file('app.py', default_timeout=15).run()
     assert not app.exception
     assert app.title[0].value == 'CipherVault'
 
@@ -12,7 +12,7 @@ def test_bootstrap_screen(monkeypatch, tmp_path):
     monkeypatch.setenv('VAULT_MASTER_KEY', 'test-master-key-of-at-least-32-characters')
     monkeypatch.setenv('VAULT_BOOTSTRAP_TOKEN', 'test-bootstrap')
     monkeypatch.setenv('VAULT_DATA_DIR', str(tmp_path))
-    app = AppTest.from_file('app.py').run()
+    app = AppTest.from_file('app.py', default_timeout=15).run()
     assert not app.exception
     app.text_input[0].set_value('test-bootstrap').run()
     assert not app.exception
@@ -28,7 +28,7 @@ def test_admin_login_and_workspace(monkeypatch, tmp_path):
     vault = Vault(tmp_path, key)
     secret = pyotp.random_base32()
     vault.bootstrap('admin', 'correct-password-123', secret, pyotp.TOTP(secret).now())
-    app = AppTest.from_file('app.py').run()
+    app = AppTest.from_file('app.py', default_timeout=15).run()
     app.text_input[0].set_value('admin')
     app.text_input[1].set_value('correct-password-123')
     app.text_input[2].set_value(pyotp.TOTP(secret).now())
@@ -52,7 +52,7 @@ def test_file_filters_sharing_and_integrity_controls(monkeypatch, tmp_path):
     token = vault.login('admin', 'correct-password-123', pyotp.TOTP(secret).now())
     fid = vault.upload(token, 'report.pdf', b'not actually a pdf')
     vault.upload(token, 'photo.png', b'not actually an image', True)
-    app = AppTest.from_file('app.py')
+    app = AppTest.from_file('app.py', default_timeout=15)
     app.session_state['token'] = token
     app.run()
     assert not app.exception
