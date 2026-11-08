@@ -163,12 +163,22 @@ function updateToggle() {
   toggle.textContent = paused ? 'Play animation' : 'Pause animation';
   toggle.setAttribute('aria-pressed', String(paused));
 }
-toggle.addEventListener('click', () => { paused = !paused; updateToggle(); lastTime = 0; if (!paused) animate(); });
-motion.addEventListener('change', () => { paused = motion.matches; updateToggle(); if (!paused) animate(); });
-document.addEventListener('visibilitychange', () => { lastTime = 0; if (!document.hidden && !paused) animate(); });
+function syncAnimation() {
+  cancelAnimationFrame(frame);
+  frame = 0;
+  // Reset the previous run's RAF timestamp before resuming. A direct animate()
+  // call must not rewind the clock or count time spent in a hidden page.
+  lastTime = 0;
+  updateToggle();
+  if (!paused && !document.hidden) animate();
+}
+toggle.addEventListener('click', () => { paused = !paused; syncAnimation(); });
+motion.addEventListener('change', () => { paused = motion.matches; syncAnimation(); });
+document.addEventListener('visibilitychange', syncAnimation);
 updateToggle();
 function animate(timestamp = 0) {
   cancelAnimationFrame(frame);
+  frame = 0;
   if (document.hidden) return;
   if (!paused) frame = requestAnimationFrame(animate);
   const delta = lastTime ? Math.min((timestamp - lastTime) / 1000, 0.05) : 0;
