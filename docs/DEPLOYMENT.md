@@ -25,7 +25,7 @@ This creates a **new** empty vault. Existing Community Cloud accounts/files are 
 ## Streamlit Community Cloud
 
 1. Sign in at https://share.streamlit.io/ using the GitHub account that owns this repository.
-2. Create an app from `Arihant2007/secure-remote-file-vault`, branch `main`, entrypoint `app.py`.
+2. Create an app from `Arijai2007/secure-remote-file-vault`, branch `main`, entrypoint `app.py`.
 3. Choose a supported Python version (tested with Python 3.13).
 4. Run `python setup_vault.py --generate-secrets` privately. Paste its TOML output into **Advanced settings → Secrets**. Save a secure backup. Do not put secrets in GitHub.
 5. Deploy. Open the app, enter your bootstrap token, create the administrator, scan the authenticator QR and enter its code. Remove the bootstrap token from host secrets after initialization if desired; reinitialization is still blocked by the database.
