@@ -1,12 +1,15 @@
 """Security and persistence boundary. UI code never authorizes operations."""
 import hashlib
 import hmac
+import json
 import secrets
 import sqlite3
 import time
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
+
+from security_analytics import analyze_activity
 
 import bcrypt
 import pyotp
@@ -64,6 +67,8 @@ class Vault:
             except ValueError as exc:
                 raise VaultError('The master key does not unlock this vault. Restore the original key.') from exc
 
+        self._initialize_audit_chain()
+
     @contextmanager
     def db(self):
         db = sqlite3.connect(self.db_path, timeout=15)
@@ -87,10 +92,105 @@ class Vault:
             raise VaultError('Use a password of at least 12 characters and at most 72 UTF-8 bytes.')
         return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
 
-    @staticmethod
-    def audit(db, actor, action, target='', outcome='allowed'):
-        db.execute('INSERT INTO audit(at,actor,action,target,outcome) VALUES(?,?,?,?,?)',
-                   (time.time(), actor, action, str(target)[:160], outcome))
+    def _audit_mac(self, values):
+        payload = json.dumps(values, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()
+        key = hmac.digest(self.key, b'cipher-vault-audit-v1', 'sha256')
+        return hmac.new(key, payload, hashlib.sha256).hexdigest()
+
+    def _initialize_audit_chain(self):
+        # One-time migration: historical events are sealed as found, not retroactively verified.
+        with self.db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            db.execute('CREATE TABLE IF NOT EXISTS audit_seals '
+                       '(event_id INTEGER PRIMARY KEY, previous TEXT NOT NULL, mac TEXT NOT NULL, '
+                       'bytes_count INTEGER NOT NULL DEFAULT 0)')
+            if db.execute("SELECT 1 FROM settings WHERE name='audit_head_v1'").fetchone():
+                return
+            previous = '0' * 64
+            last_id = 0
+            for row in db.execute('SELECT * FROM audit ORDER BY id').fetchall():
+                values = [row[k] for k in ('id', 'at', 'actor', 'action', 'target', 'outcome')]
+                mac = self._audit_mac(values + [0, previous])
+                db.execute('INSERT INTO audit_seals VALUES(?,?,?,0)', (row['id'], previous, mac))
+                previous, last_id = mac, row['id']
+            db.execute("INSERT INTO settings VALUES('audit_head_v1', ?)",
+                       (json.dumps({'id': last_id, 'mac': previous, 'legacy_through': last_id}),))
+
+    def audit(self, db, actor, action, target='', outcome='allowed', bytes_count=0):
+        # Take a SQLite write lock before reading the head; concurrent writers serialize.
+        db.execute("UPDATE settings SET value=value WHERE name='audit_head_v1'")
+        head = json.loads(db.execute("SELECT value FROM settings WHERE name='audit_head_v1'").fetchone()[0])
+        at = time.time()
+        target = str(target)[:160]
+        cursor = db.execute('INSERT INTO audit(at,actor,action,target,outcome) VALUES(?,?,?,?,?)',
+                            (at, actor, action, target, outcome))
+        event_id = cursor.lastrowid
+        mac = self._audit_mac([event_id, at, actor, action, target, outcome, bytes_count, head['mac']])
+        db.execute('INSERT INTO audit_seals VALUES(?,?,?,?)', (event_id, head['mac'], mac, bytes_count))
+        head.update(id=event_id, mac=mac)
+        db.execute("UPDATE settings SET value=? WHERE name='audit_head_v1'", (json.dumps(head),))
+
+    def _verify_audit(self, db, checkpoint=None):
+        try:
+            return self._check_audit(db, checkpoint)
+        except (ValueError, TypeError, KeyError, IndexError, sqlite3.DatabaseError):
+            return {'valid': False, 'detail': 'Audit metadata is missing or malformed.', 'count': 0}
+
+    def _check_audit(self, db, checkpoint=None):
+        previous, last_id, count = '0' * 64, 0, 0
+        checkpoint_seen = checkpoint is None
+        if checkpoint is not None:
+            if not isinstance(checkpoint, dict) or set(checkpoint) != {'id', 'mac', 'signature'}:
+                raise VaultError('Invalid audit checkpoint.')
+            if (type(checkpoint['id']) is not int or checkpoint['id'] < 0
+                    or any(not isinstance(checkpoint[k], str) or len(checkpoint[k]) != 64
+                           or any(c not in '0123456789abcdef' for c in checkpoint[k])
+                           for k in ('mac', 'signature'))):
+                raise VaultError('Invalid audit checkpoint fields.')
+            if not hmac.compare_digest(checkpoint['signature'],
+                                       self._audit_mac(['checkpoint', checkpoint['id'], checkpoint['mac']])):
+                raise VaultError('Checkpoint signature is invalid or belongs to another vault.')
+            checkpoint_seen = checkpoint['id'] == 0 and checkpoint['mac'] == previous
+        for row in db.execute('SELECT a.*, s.previous, s.mac, s.bytes_count FROM audit a '
+                              'LEFT JOIN audit_seals s ON s.event_id=a.id ORDER BY a.id'):
+            values = [row[k] for k in ('id', 'at', 'actor', 'action', 'target', 'outcome')]
+            expected = self._audit_mac(values + [row['bytes_count'], previous])
+            if row['previous'] != previous or not hmac.compare_digest(row['mac'] or '', expected):
+                return {'valid': False, 'detail': f"Audit chain mismatch at event {row['id']}.", 'count': count}
+            previous, last_id = expected, row['id']
+            count += 1
+            if checkpoint and checkpoint['id'] == last_id and checkpoint['mac'] == previous:
+                checkpoint_seen = True
+        head = json.loads(db.execute("SELECT value FROM settings WHERE name='audit_head_v1'").fetchone()[0])
+        seals = db.execute('SELECT count(*) FROM audit_seals').fetchone()[0]
+        valid = (head['id'] == last_id and head['mac'] == previous and seals == count and checkpoint_seen)
+        return {'valid': valid, 'detail': 'Audit chain verified.' if valid else 'Audit head, deletion, or checkpoint mismatch.',
+                'count': count, 'legacy_through': head['legacy_through'], 'id': last_id, 'mac': previous}
+
+    def verify_audit(self, token, checkpoint=None):
+        self.require(token, ('Admin',), 'verify_audit')
+        with self.db() as db:
+            db.execute('BEGIN')
+            return self._verify_audit(db, checkpoint)
+
+    def audit_checkpoint(self, token):
+        result = self.verify_audit(token)
+        if not result['valid']:
+            raise VaultError('Cannot checkpoint a damaged audit chain.')
+        return {'id': result['id'], 'mac': result['mac'],
+                'signature': self._audit_mac(['checkpoint', result['id'], result['mac']])}
+
+    def anomaly_report(self, token):
+        self.require(token, ('Admin',), 'view_anomalies')
+        with self.db() as db:
+            db.execute('BEGIN')
+            if not self._verify_audit(db)['valid']:
+                raise VaultError('Audit integrity failed. Activity analysis is unavailable.')
+            rows = db.execute('SELECT a.*, s.bytes_count FROM audit a JOIN audit_seals s ON s.event_id=a.id '
+                              'WHERE a.at>=? ORDER BY a.at, a.id LIMIT 50001', (time.time() - 30 * 86400,)).fetchall()
+            if len(rows) > 50000:
+                raise VaultError('More than 50,000 events in 30 days. Archive/export before analysis.')
+            return analyze_activity([dict(row) for row in rows], now=time.time())
 
     def is_empty(self):
         with self.db() as db:
@@ -234,7 +334,7 @@ class Vault:
         with self.db() as db:
             db.execute('INSERT INTO files VALUES(?,?,?,?,?,?,?,?,?,?)',
                        (file_id, name, user['id'], int(shared), len(data), time.time(), digest, wrapped, nonce, encrypted))
-            self.audit(db, user['username'], 'upload', file_id)
+            self.audit(db, user['username'], 'upload', file_id, bytes_count=len(data))
         return file_id
 
     def download(self, token, file_id):
@@ -258,7 +358,8 @@ class Vault:
                     result = (row['name'], data)
                 except (ValueError, InvalidTag):
                     error = 'Integrity verification failed. Download blocked.'
-            self.audit(db, user['username'], action, file_id, 'denied' if error else 'allowed')
+            self.audit(db, user['username'], action, file_id, 'denied' if error else 'allowed',
+                       bytes_count=len(result[1]) if result and action == 'download' else 0)
         if error:
             raise VaultError(error)
         return result

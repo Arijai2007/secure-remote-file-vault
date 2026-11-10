@@ -1,6 +1,7 @@
 import csv
 import hmac
 import io
+import json
 import math
 import os
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ import streamlit as st
 from ui import (activity_item, banner, empty_state, eyebrow, file_heading,
                 file_kind, format_size, load_styles, protection_card, brand,
                 signin_art, workspace_identity, inspector_metadata)
+from security_analytics import synthetic_demo
 from vault import Vault, VaultError
 
 st.set_page_config(page_title='CipherVault | Secure Remote File Vault', page_icon='🔐', layout='wide')
@@ -89,6 +91,33 @@ def csv_export(rows, fields):
     writer.writerows({k: "'" + v if isinstance(v, str) and v.startswith(('=', '+', '-', '@', '\t', '\r'))
                      else v for k, v in row.items()} for row in rows)
     return output.getvalue()
+
+
+def anomaly_results(rows):
+    """Present reviewable alerts using the same layout for real and synthetic activity."""
+    if not rows:
+        st.info('No completed activity windows are available to review yet.')
+        return
+    alerts = [row for row in rows if row['anomalous']]
+    if alerts:
+        st.warning(f'{len(alerts)} unusual activity window(s) need review. An alert is not proof of an attack.')
+    else:
+        st.success('No unusual windows were flagged in this evaluation.')
+    display = [dict(r, start=time_label(r['start']),
+                    status='Review activity' if r['anomalous'] else 'Within baseline') for r in rows]
+    st.dataframe(display, hide_index=True, width='stretch',
+                 column_order=['actor', 'start', 'status', 'downloads', 'download_bytes',
+                               'failed_logins', 'denied_actions', 'distinct_files', 'decision_score', 'signals'],
+                 column_config={'actor': 'Account', 'start': 'Window start (UTC)', 'status': 'Review status',
+                                'downloads': 'Downloads', 'download_bytes': 'Download bytes',
+                                'failed_logins': 'Failed logins', 'denied_actions': 'Denied actions',
+                                'distinct_files': 'Distinct files', 'signals': 'Activity compared with baseline',
+                                'decision_score': st.column_config.NumberColumn('Model decision score', format='%.4f')})
+    for row in alerts[:20]:
+        with st.expander(f"Review {row['actor']} - {time_label(row['start'])}"):
+            st.write(row['signals'])
+            st.caption('Check whether the activity was expected. Review the audit trail before taking action. '
+                       'Displayed comparisons are observations, not causal explanations of the model.')
 
 
 if 'token' not in st.session_state:
@@ -198,7 +227,7 @@ with st.sidebar:
     brand()
     pages = ['Overview', 'File vault', 'My account', 'Security guide']
     if user['role'] == 'Admin':
-        pages = ['Overview', 'File vault', 'Team access', 'Audit trail', 'My account', 'Security guide']
+        pages = ['Overview', 'File vault', 'Team access', 'Audit trail', 'Threat monitoring', 'My account', 'Security guide']
     page = st.radio('Workspace', pages, label_visibility='collapsed')
     st.divider()
     st.write(user['username'])
@@ -408,6 +437,11 @@ try:
     elif page == 'Audit trail':
         st.header('Audit trail')
         st.caption('Follow the decisions your vault makes. View and export the latest 1,000 recorded events.')
+        initial_integrity = vault.verify_audit(token)
+        if not initial_integrity['valid']:
+            st.error(initial_integrity['detail'])
+            st.warning('Audit data may have been changed. Preserve the database and trusted checkpoints for review.')
+            st.stop()
         logs = vault.logs(token)
         a, b, c = st.columns(3)
         a.metric('Events in view', len(logs))
@@ -424,7 +458,53 @@ try:
         st.dataframe(display, hide_index=True, width='stretch')
         st.download_button('Export filtered audit CSV', csv_export(display, ['id', 'at', 'actor', 'action', 'target', 'outcome']),
                            'cipher-vault-audit.csv', 'text/csv', icon=':material/download:')
-        st.caption('A denied event is an access decision, not proof of an attack. Server operators can modify local audit records.')
+        st.divider()
+        st.subheader('Audit integrity')
+        st.caption('Verify the event chain and compare it with a checkpoint you saved earlier.')
+        checkpoint_file = st.file_uploader('Optional trusted checkpoint JSON', type=['json'], key='audit_checkpoint')
+        checkpoint = None
+        if checkpoint_file is not None:
+            try:
+                if checkpoint_file.size > 4096:
+                    raise ValueError('Checkpoint too large')
+                checkpoint = json.loads(checkpoint_file.getvalue())
+            except (ValueError, UnicodeDecodeError):
+                st.error('Choose a valid checkpoint JSON smaller than 4 KiB.')
+                st.stop()
+        status = vault.verify_audit(token, checkpoint)
+        if status['valid']:
+            st.success(f"{status['detail']} {status['count']} events checked.")
+            st.download_button('Save trusted audit checkpoint', json.dumps(vault.audit_checkpoint(token), indent=2),
+                               'cipher-vault-checkpoint.json', 'application/json')
+        else:
+            st.error(status['detail'])
+        st.caption('HMAC-linked records detect edits and deletion. Save checkpoints separately to detect database rollback. '
+                   'An operator with the master key can forge records. Historical events were sealed as found at migration; '
+                   f"legacy events through ID {status.get('legacy_through', 'unknown')} are not retroactively authenticated.")
+
+    elif page == 'Threat monitoring':
+        banner('SECURITY OPERATIONS', 'AI threat monitoring',
+               'Spot unusual access patterns and investigate them with your audit trail.', 'ADMIN ONLY')
+        st.caption('Isolation Forest analyzes audit metadata locally. No file contents are sent to an AI service. '
+                   'Alerts support review and never automatically block accounts.')
+        report = vault.anomaly_report(token)
+        st.info(report['message'])
+        if report['ready']:
+            results = report['results']
+            a, b, c = st.columns(3)
+            a.metric('Baseline user windows', report['training_windows'])
+            b.metric('Evaluated user windows', len(results))
+            c.metric('Unusual windows', sum(r['anomalous'] for r in results))
+            anomaly_results(results)
+            st.caption('Negative decision scores are model outliers, not probabilities. Feature comparisons describe '
+                       'observations, not model explanations. A compromised baseline can reduce detection quality.')
+        st.subheader('Isolated lab demonstration')
+        st.caption('Synthetic examples only. These do not change vault activity or measure real-world accuracy.')
+        if st.button('Run synthetic AI demo', type='primary'):
+            st.session_state['show_ai_demo'] = True
+        if st.session_state.get('show_ai_demo'):
+            st.info('DEMO DATA - generated examples, separate from your real vault activity.')
+            anomaly_results(synthetic_demo())
 
     elif page == 'My account':
         st.header('My account')
