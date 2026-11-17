@@ -76,6 +76,10 @@ An optional `render.yaml` Blueprint configures a paid Python service with a 1 GB
 pip install -r requirements-dev.txt
 python -m pytest -q
 node --test tests/test_vault_scene.cjs
+cd web
+npm ci
+npm test
+npm run build
 ```
 
 Tests exercise encryption round trips and restart, ciphertext/key/hash/nonce tampering, all three roles, cross-account isolation, denied-action logging, OTP replay, lockout, logout, expiry, deactivation, encrypted seeds, wrong master keys and initial UI rendering. GitHub Actions runs the tests on every push and pull request.
