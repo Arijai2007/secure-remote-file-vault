@@ -26,6 +26,22 @@ app = FastAPI(title="CipherVault API", docs_url=None, redoc_url=None)
 COOKIE = "cv_session"
 
 
+@app.middleware("http")
+async def private_api_responses(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        # Vercel proxies this API. Authenticated data and enrollment material
+        # must never be cached by a CDN, proxy, or shared browser cache.
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@app.get("/healthz", include_in_schema=False)
+def health():
+    return {"status": "ok"}
+
+
 def config(name, default=""):
     if name in os.environ:
         return os.environ[name]

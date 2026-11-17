@@ -1,0 +1,18 @@
+# Free demo only: SQLite files disappear on restart/redeploy/spindown.
+services:
+  - type: web
+    name: cipher-vault-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-web.txt
+    startCommand: python -m uvicorn web_api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: VAULT_DATA_DIR
+        value: /tmp/cipher-vault
+      - key: VAULT_COOKIE_SECURE
+        value: "1"
+      - key: VAULT_MASTER_KEY
+        generateValue: true
+      - key: VAULT_BOOTSTRAP_TOKEN
+        generateValue: true

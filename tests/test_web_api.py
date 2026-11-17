@@ -11,7 +11,9 @@ def test_web_setup_login_file_roles_and_audit(monkeypatch, tmp_path):
     monkeypatch.setenv("VAULT_DATA_DIR", str(tmp_path))
     web_api.get_vault.cache_clear()
     client = TestClient(web_api.app)
+    assert client.get("/healthz").json() == {"status": "ok"}
     assert client.get("/api/status").json() == {"initialized": False}
+    assert client.get("/api/status").headers["cache-control"] == "no-store"
     assert client.post("/api/setup/begin", json={"bootstrap_token": "wrong"}).status_code == 403
     enrollment = client.post("/api/setup/begin", json={"bootstrap_token": "private-bootstrap-token"}).json()
     setup = {"bootstrap_token": "private-bootstrap-token", "enrollment": enrollment["enrollment"],
@@ -23,6 +25,7 @@ def test_web_setup_login_file_roles_and_audit(monkeypatch, tmp_path):
         db.execute("UPDATE users SET last_step=-1 WHERE username='admin'")
     login = client.post("/api/login", json={"username": "admin", "password": setup["password"], "code": setup["code"]})
     assert login.status_code == 200
+    assert login.headers["cache-control"] == "no-store"
     csrf = login.json()["csrf"]
     assert client.post("/api/files", files={"file": ("sample.txt", b"secret")}).status_code == 403
     upload = client.post("/api/files?shared=true", files={"file": ("sample.txt", b"secret")}, headers={"X-CSRF-Token": csrf})
