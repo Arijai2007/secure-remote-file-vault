@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { Activity, ArrowRight, BadgeCheck, Check, ChevronRight, CircleAlert, Copy, Download, Eye, FileKey2, FileLock2, FileText, Fingerprint, FolderLock, HardDrive, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Menu, Pause, Play, RefreshCw, Search, Settings2, Shield, ShieldAlert, ShieldCheck, Sparkles, UploadCloud, UserRound, Users, X } from 'lucide-react'
 import { api, kind, size, when } from './api.js'
