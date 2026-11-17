@@ -1,0 +1,21 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "${VAULT_BIND_IP:-127.0.0.1}:8000:8000"
+    environment:
+      VAULT_MASTER_KEY: ${VAULT_MASTER_KEY:?Set VAULT_MASTER_KEY in .env}
+      VAULT_BOOTSTRAP_TOKEN: ${VAULT_BOOTSTRAP_TOKEN:?Set VAULT_BOOTSTRAP_TOKEN in .env}
+      VAULT_DATA_DIR: /app/data
+      VAULT_COOKIE_SECURE: ${VAULT_COOKIE_SECURE:-0}
+    volumes:
+      - vault-data:/app/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  vault-data:
