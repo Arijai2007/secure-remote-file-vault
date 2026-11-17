@@ -143,22 +143,21 @@ except VaultError as exc:
     st.stop()
 
 if vault.is_empty():
-    banner('WELCOME TO YOUR VAULT', 'Security starts with you.',
-           'Create your administrator account and connect your authenticator. Your workspace will be ready in a few steps.',
-           'FIRST-TIME SETUP')
-    setup_tab, about_tab = st.tabs(['Set up your workspace', 'Explore the protection layers'])
-    with setup_tab:
-        left, right = st.columns([1.35, 1], gap='large')
-        with left:
-            st.subheader('Create your first administrator')
-            st.caption('Start with the private bootstrap token from your deployment secrets.')
-            supplied = st.text_input('Bootstrap token', type='password', placeholder='Enter your private setup token')
+    left, right = st.columns([1.35, 1], gap='large')
+    with left:
+        signin_art()
+    with right:
+        with st.container(key='signin-panel'):
+            st.subheader('Set Up Workspace')
+            st.caption('Create the first administrator and connect an authenticator.')
+            supplied = st.text_input('Bootstrap token', type='password', placeholder='Private setup token')
             expected = config('VAULT_BOOTSTRAP_TOKEN')
             authorized = bool(expected and supplied and hmac.compare_digest(supplied, expected))
             if authorized:
                 secret = st.session_state.setdefault('setup_totp', pyotp.random_base32())
+                enrollment(secret, 'administrator')
                 with st.form('setup'):
-                    username = st.text_input('Administrator username', placeholder='e.g. arihant')
+                    username = st.text_input('Administrator username', placeholder='Choose a username')
                     password = st.text_input('Password (12+ characters)', type='password')
                     confirm = st.text_input('Confirm password', type='password')
                     code = st.text_input('Authenticator code', max_chars=6, placeholder='000000')
@@ -174,19 +173,9 @@ if vault.is_empty():
                         st.error(str(exc))
             elif supplied:
                 st.warning('That setup token does not match. Check your deployment secrets.')
-        with right:
-            if authorized:
-                st.subheader('Connect your authenticator')
-                enrollment(secret, 'administrator')
             else:
-                eyebrow('YOUR SETUP CHECKLIST')
-                for item in ['1. Verify your private setup token', '2. Choose your administrator credentials',
-                             '3. Scan the authenticator QR code', '4. Confirm a code and open your workspace']:
-                    st.write(item)
-                st.info('No default passwords. No public signup. You decide who gets access.')
-    with about_tab:
-        protections()
-        st.caption('VPN protection depends on your hosting network. The public demo does not establish a VPN connection.')
+                st.info('Enter the bootstrap token from your local secrets file to begin. No default account exists.')
+    st.caption('VPN protection depends on your hosting network. This local demonstration is reachable only on this computer.')
     footer()
     st.stop()
 
@@ -286,8 +275,15 @@ try:
         protections()
 
     elif page == 'File vault':
-        st.header('File vault')
-        st.caption('Encrypted on arrival. Verified on the way out.')
+        st.html('''<div class="vault-page-heading"><div><span class="vault-kicker">CIPHER://VAULT::FS &nbsp; MULTI-TENANT ENVELOPE</span>
+                <h1>File Vault</h1><p>Encrypted on arrival. Verified on the way out.</p></div></div>''')
+        actions = st.columns([1, 1, 1.4])
+        if user['role'] != 'Guest':
+            batch_button = actions[0].button('Batch verify SHA-256', key='vault-batch', icon=':material/verified_user:')
+        else:
+            batch_button = False
+        if actions[1].button('Refresh manifest', key='vault-refresh', icon=':material/refresh:'):
+            st.rerun()
         a, b, c, d = st.columns(4)
         a.metric('Accessible objects', len(files))
         b.metric('Original file content', format_size(sum(f['size'] for f in files)))
@@ -297,7 +293,7 @@ try:
                 ('Shared metadata access. File content is restricted.' if user['role'] == 'Guest' else
                  'Downloads authenticate AES-GCM content and verify its SHA-256 digest.'))
         if user['role'] in ('Admin', 'Employee'):
-            with st.expander('Upload a file', icon=':material/upload_file:', expanded=not files):
+            with st.expander('Encrypt & upload', icon=':material/upload_file:', expanded=not files):
                 with st.form('upload', clear_on_submit=True):
                     uploaded = st.file_uploader('Choose a document', help='Maximum 20 MiB. All file types supported. Files are stored encrypted.')
                     visibility = st.radio('Initial access', ['Private — you and administrators', 'Team — all workspace members'], horizontal=True)
@@ -309,11 +305,12 @@ try:
                     else:
                         vault.upload(token, uploaded.name, uploaded.getvalue(), visibility.startswith('Team'))
                         toast('File encrypted and uploaded.')
-        f1, f2, f3, f4 = st.columns([2.1, 1.2, 1.1, 1.2])
-        search = f1.text_input('Search files', placeholder='Search by filename or owner…')
-        visibility = f2.selectbox('Visibility', ['All accessible', 'Private', 'Team shared', 'Uploaded by me'])
-        kind = f3.selectbox('File type', ['All types', 'Document', 'Spreadsheet', 'Image', 'Archive', 'Code', 'Other'])
-        sort = f4.selectbox('Sort by', ['Newest first', 'Oldest first', 'Name A–Z', 'Largest first'])
+        with st.container(key='vault-filters'):
+            f1, f2, f3, f4 = st.columns([2.1, 1.2, 1.1, 1.2])
+            search = f1.text_input('Search files', placeholder='Search by filename or owner…')
+            visibility = f2.selectbox('Visibility', ['All accessible', 'Private', 'Team shared', 'Uploaded by me'])
+            kind = f3.selectbox('File type', ['All types', 'Document', 'Spreadsheet', 'Image', 'Archive', 'Code', 'Other'])
+            sort = f4.selectbox('Sort by', ['Newest first', 'Oldest first', 'Name A–Z', 'Largest first'])
         matches = [f for f in files if search.casefold() in (f['name'] + ' ' + f['uploaded_by']).casefold()
                    and (visibility != 'Private' or not f['shared'])
                    and (visibility != 'Team shared' or f['shared'])
@@ -325,9 +322,8 @@ try:
         st.caption(f'{len(matches)} files · {format_size(sum(f["size"] for f in matches))} of file content')
         if not matches:
             empty_state('No files in this view', 'Try a different search or filter, or add your first file.')
-        tools = st.columns([1, 1, 2])
         if user['role'] != 'Guest':
-            if tools[0].button('Batch verify SHA-256', disabled=not matches, icon=':material/verified_user:'):
+            if batch_button:
                 verified = 0
                 for item in matches:
                     try:
@@ -337,8 +333,6 @@ try:
                         st.error(f"{item['name']}: {exc}")
                 if verified:
                     st.success(f'{verified} verified · {len(matches) - verified} failed. Checked current filtered files.')
-        if tools[1].button('Refresh manifest', icon=':material/refresh:'):
-            st.rerun()
         listing, inspector = st.columns([1.8, 1], gap='large')
         with listing:
             with st.container(key='file-list'):
