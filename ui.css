@@ -110,3 +110,48 @@ code,pre,.mono,.inspector-metadata dd,.stage-label,.protocol-strip span { font-f
   .protocol-strip { grid-template-columns:1fr; }.st-key-signin-panel [data-testid="stForm"] { padding:1.25rem!important; }
   .st-key-crypto-inspector { padding:1rem; }.inspector-metadata>div { grid-template-columns:4.8rem minmax(0,1fr); }
 }
+
+/* Stitch file-vault shell, adapted around the real Streamlit controls. */
+.block-container { max-width: none; padding: 2.1rem 2rem 2rem; }
+[data-testid="stSidebar"] { width: 264px!important; background:#090e1c; }
+[data-testid="stSidebar"] > div:first-child { padding:1.35rem .8rem; }
+.brand-line { gap:10px; padding:.1rem .35rem 1.25rem; }
+.brand-symbol { border:1px solid #324153; background:#1a2032; border-radius:10px; }
+.brand-word { font-size:1.3rem; line-height:1.1; }
+.brand-sub { color:#8aebff; font-family:"JetBrains Mono",monospace; font-size:.58rem; }
+[data-testid="stSidebar"] [data-testid="stRadio"] { margin:.5rem 0 1.2rem; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label { border-radius:8px; padding:.55rem .7rem; margin:.13rem 0; }
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) { background:#22d3ee; box-shadow:0 2px 12px #22d3ee30; }
+.workspace-identity { padding:.25rem 0 .9rem; margin-bottom:1rem; }
+.vault-page-heading { display:flex; align-items:end; justify-content:space-between; margin:0 0 .5rem; }
+.vault-page-heading h1 { font-size:2rem!important; line-height:1.05; margin:.6rem 0 .25rem; }
+.vault-page-heading p { color:#c8d1df; font-size:.9rem; margin:0 0 .65rem; }
+.vault-kicker { display:inline-block; color:#8aebff; background:#1d273a; padding:4px 6px; border-radius:3px; font:.64rem "JetBrains Mono",monospace; letter-spacing:.07em; }
+[data-testid="stMetric"] { min-height:92px; background:#181e2f; border:1px solid #1e2638; border-radius:12px; padding:.8rem .95rem; }
+[data-testid="stMetricLabel"] p { color:#d1d7e4; font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; }
+[data-testid="stMetricValue"] { color:#e1e5f2; font-size:1.65rem; }
+.st-key-vault-filters { background:#181e2f; border-radius:16px; padding:1rem 1rem .1rem; margin:1.2rem 0 .35rem; }
+.st-key-vault-filters label p { font-size:.72rem; color:#aebbd0; }
+.st-key-vault-filters [data-baseweb="input"],.st-key-vault-filters [data-baseweb="select"]>div { background:#090e1c; border-color:#262e42; }
+.st-key-file-list [class*="st-key-file-card-"] { background:#181e2e; border:1px solid #222b3f!important; border-radius:15px!important; margin-bottom:.45rem; }
+.st-key-file-list [class*="st-key-file-card-"]:hover { border-color:#4c8193!important; }
+.file-heading { padding:.05rem 0 .25rem; }
+.file-icon { background:#252b3d; height:46px; min-width:46px; border-radius:10px; }
+.file-heading h3 { font-size:1.05rem!important; }
+.file-heading-text>span { text-transform:uppercase; font:.61rem "JetBrains Mono",monospace; letter-spacing:.06em; }
+.file-badge.team { background:#452382; color:#e8d8ff; }
+.file-badge.private { background:#164254; color:#8aebff; }
+.st-key-file-list [data-testid="stButton"] button { min-height:2.3rem; font-size:.76rem; }
+.st-key-crypto-inspector { background:linear-gradient(145deg,#1c2535,#141b2a 70%); border:1px solid #202b3c; border-radius:22px; padding:1.35rem; }
+.inspector-heading { padding:.1rem 0 .5rem; }.inspector-heading h3 { font-size:1.25rem!important; }
+.inspector-metadata { background:#090e1c; border-radius:13px; padding:1rem; }
+.inspector-metadata>div { grid-template-columns:6.2rem minmax(0,1fr); }
+.st-key-signin-panel { background:#1b2030; border:1px solid #262d40; border-radius:22px; padding:1.5rem; box-shadow:0 20px 45px #0003; }
+.st-key-signin-panel [data-testid="stForm"] { background:transparent; border:0!important; padding:0!important; }
+.st-key-signin-panel [data-testid="stTextInput"] input { min-height:3.25rem; background:#090e1c; border-radius:12px; }
+.st-key-signin-panel [data-testid="stFormSubmitButton"] button { min-height:3.7rem; font-size:1.05rem; }
+.signin-story h2 { font-size:clamp(2.5rem,4vw,4rem)!important; }
+.signin-story>p { font-size:1.1rem; }
+.protocol-strip>span { background:#181e2f; min-height:74px; }
+@media (max-width:1000px) { .block-container { padding:3.5rem 1.2rem 1.3rem; } }
+@media (max-width:760px) { .block-container { padding:3.5rem 1rem 1rem; } .vault-page-heading h1 { font-size:1.7rem!important; } .st-key-signin-panel { padding:1rem; } }

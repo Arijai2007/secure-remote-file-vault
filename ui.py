@@ -40,7 +40,7 @@ def signin_art():
     components.html('''<!doctype html><html lang="en"><head><meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       <style>*{box-sizing:border-box}body{margin:0;background:#121c30;color:#dee2f6;font:12px monospace}
-      #vault-scene{width:100%;height:320px;background:radial-gradient(ellipse at center,#17344c,#121c30 65%);border:1px solid #30394e;border-radius:18px;overflow:hidden}
+      #vault-scene{width:100%;height:400px;background:radial-gradient(ellipse at center,#17344c,#121c30 65%);border:1px solid #30394e;border-radius:18px;overflow:hidden}
       canvas{display:block}button{position:absolute;right:14px;bottom:14px;padding:8px 10px;border-radius:8px;border:1px solid #51647c;background:#090e1c;color:#a2eeff;cursor:pointer}
       button:focus-visible{outline:2px solid #22d3ee;outline-offset:3px}.label{position:absolute;top:14px;left:14px;color:#8aebff;pointer-events:none}
       #fallback{position:absolute;inset:100px 20px;text-align:center;font:16px sans-serif;color:#a2eeff}
@@ -48,7 +48,7 @@ def signin_art():
       <span class="label">AES-256-GCM · RSA-3072 OAEP</span><p id="fallback" hidden>Encrypted storage<br><br>AES-256-GCM / RSA-3072 OAEP</p>
       <button id="motion-toggle" type="button">Pause animation</button><script>''' +
       assets.joinpath('three.min.js').read_text(encoding='utf-8') + '</script><script>' +
-      assets.joinpath('vault-scene.js').read_text(encoding='utf-8') + '</script></body></html>', height=320, scrolling=False)
+      assets.joinpath('vault-scene.js').read_text(encoding='utf-8') + '</script></body></html>', height=400, scrolling=False)
     st.html('''<section class="signin-story"><div class="protocol-strip"><span>AES-256-GCM<small>Encrypted storage</small></span>
       <span>Six-digit TOTP<small>Two-factor sign-in</small></span><span>Role-based access<small>Admin / Employee / Guest</small></span></div>
       <p class="signin-note">No public signup. No third-party trackers. Your administrator controls workspace access.</p></section>''')
