@@ -1,5 +1,28 @@
 # CipherVault — Secure Remote File Vault
 
+## Website UI (Stitch design adaptation)
+
+The `web/` frontend uses the supplied **Obsidian Bastion** Stitch export's palette, typography, sidebar, metrics, repository table, inspector, and page hierarchy. The landing page adds a locally rendered Three.js vault core and scroll reveals with a reduced-motion fallback. The ZIP's sample metrics and unsupported claims (client-side decryption, hardware tokens, automatic blocking, compliance certifications, and multi-node telemetry) are intentionally replaced with real vault data and accurate descriptions.
+
+The existing `vault.py` remains the security and persistence boundary. `web_api.py` exposes its operations on the same origin, using an HttpOnly session cookie and a per-session request token. `app.py` remains available as the Streamlit demonstration.
+
+**Local website run (Python 3.13 and Node 24):**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-web.txt
+python setup_vault.py --local
+cd web
+npm ci
+npm run build
+cd ..
+.\.venv\Scripts\python.exe -m uvicorn web_api:app --host 127.0.0.1 --port 8000
+```
+
+Open `http://127.0.0.1:8000`. The ignored `.streamlit/secrets.toml` supplies local secrets. The website uses its own local `data/` directory unless `VAULT_DATA_DIR` is set. To reuse an existing vault, supply its **exact original master key** and database path; do not point a new key at an existing database.
+
+For frontend development, run `npm run dev` inside `web/` in another terminal; Vite proxies `/api` to port 8000. For a single-host Docker build, use `docker compose -f compose.web.yaml up -d --build`. Put HTTPS in front of a public deployment and set `VAULT_COOKIE_SECURE=1`. Bind to the actual VPN interface address for VPN-only hosting and verify the public port is unreachable. Do not run the Streamlit and website containers simultaneously against the same SQLite database.
+
 A working Python / Streamlit cybersecurity project implementing password + TOTP MFA, server-side RBAC, hybrid encryption, integrity verification and audit logs. Based on the Secure Remote File Vault synopsis for Computer and Cyber Security Fundamentals, JIIT Noida.
 
 **Live demonstration:** https://cipher-vault-arihant.streamlit.app/
