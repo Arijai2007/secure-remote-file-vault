@@ -26,6 +26,17 @@ Live website: https://ciphervault-steel.vercel.app/
 - Requests use the frontend origin; no permissive cross-origin cookie/CORS configuration is needed. HttpOnly, Secure, SameSite=Strict cookies remain in use. API responses are marked `Cache-Control: no-store`.
 - Update the exact API destination in `web/vercel.json` if the Render service is replaced or renamed.
 
+## Automatic deployment
+
+Push commits to `main` in `Arijai2007/secure-remote-file-vault` to update both services automatically:
+
+- Render uses the connected GitHub provider and **On Commit**. A public Git repository URL alone does not receive push events. Keep the repository selected in the Render GitHub app's repository access.
+- Vercel uses its existing GitHub connection. **Skip deployments when there are no changes to the root directory or its dependencies** is disabled, so changes outside `web/` also trigger a deployment.
+- Render has no root directory or build path filters; its API builds from the repository root. Vercel builds from `web/`.
+- Feature branches may create Vercel previews; the live Render API follows `main` only.
+
+Check each provider's deployment history for the pushed commit. GitHub's test workflow also runs on pushes; Render's On Commit setting starts deployment without waiting for those checks.
+
 ## Verify
 
 1. Render `/healthz` returns `{"status":"ok"}`; `/api/status` returns the vault initialization state.
