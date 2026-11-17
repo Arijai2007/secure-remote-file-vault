@@ -25,7 +25,11 @@ For frontend development, run `npm run dev` inside `web/` in another terminal; V
 
 A working Python / Streamlit cybersecurity project implementing password + TOTP MFA, server-side RBAC, hybrid encryption, integrity verification and audit logs. Based on the Secure Remote File Vault synopsis for Computer and Cyber Security Fundamentals, JIIT Noida.
 
-**Live demonstration:** https://cipher-vault-arihant.streamlit.app/
+**Live website:** https://ciphervault-steel.vercel.app/
+
+**API health:** https://ciphervault-api-dt6o.onrender.com/healthz
+
+The website runs on Vercel and the Python API runs on Render's free tier. See [the hosting guide](docs/RENDER_VERCEL.md). Files and accounts are temporary on this demo deployment; the Streamlit interface remains available to run locally.
 
 ## Run locally
 

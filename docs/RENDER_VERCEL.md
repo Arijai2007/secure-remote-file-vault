@@ -2,6 +2,8 @@
 
 The React website is built from `web/` on Vercel. The Python API runs from the repository root on Render. This is a new vault, independent of the older Streamlit demo.
 
+Live website: https://ciphervault-steel.vercel.app/
+
 ## Render
 
 - Source: `Arijai2007/secure-remote-file-vault`, branch `main`.
