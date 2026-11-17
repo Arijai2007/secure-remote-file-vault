@@ -19,11 +19,11 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
-function backend(resource) {
+function backend(resource, logout = async () => ({ signed_out: true })) {
   api.mockImplementation(async (path, options) => {
     if (path === '/status') return { initialized: true }
     if (path === '/session') return session
-    if (path === '/logout') return { signed_out: true }
+    if (path === '/logout') return logout()
     return resource(path, options)
   })
 }
@@ -128,4 +128,32 @@ it('a failed download cannot keep a previous verification indicator', async () =
   fireEvent.click(screen.getByRole('button', { name: 'Download verified file' }))
   await screen.findByText('Integrity verification failed')
   expect(screen.queryByText('Verified during this session')).toBeNull()
+})
+
+it('a network failure during logout keeps the account visible and offers a retry', async () => {
+  window.history.replaceState(null, '', '/app/account')
+  let offline = true
+  backend(async path => path === '/sessions' ? [] : undefined, async () => {
+    if (offline) throw new Error('Failed to fetch')
+    return { signed_out: true }
+  })
+  render(<App />)
+  await screen.findByText('Account Settings', { selector: 'h1' })
+  fireEvent.click(screen.getByRole('button', { name: 'Sign out', exact: true }))
+  await screen.findByText(/Sign-out failed/)
+  expect(window.location.pathname).toBe('/app/account')
+  offline = false
+  fireEvent.click(screen.getByRole('button', { name: 'Sign out', exact: true }))
+  await screen.findByText('Unlock Workspace')
+})
+
+it('logout of an already expired session still returns to sign-in', async () => {
+  window.history.replaceState(null, '', '/app/account')
+  backend(async path => path === '/sessions' ? [] : undefined, async () => {
+    throw Object.assign(new Error('Session expired'), { status: 401 })
+  })
+  render(<App />)
+  await screen.findByText('Account Settings', { selector: 'h1' })
+  fireEvent.click(screen.getByRole('button', { name: 'Sign out', exact: true }))
+  await screen.findByText('Unlock Workspace')
 })

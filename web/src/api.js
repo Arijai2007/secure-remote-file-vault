@@ -9,7 +9,9 @@ export async function api(path, { method = 'GET', body, csrf, raw = false } = {}
   if (!response.ok) {
     let message = 'Request failed'
     try { message = (await response.json()).detail || message } catch { /* server error without JSON */ }
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    throw error
   }
   return raw ? response : response.json()
 }

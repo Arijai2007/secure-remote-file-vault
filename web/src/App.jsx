@@ -72,13 +72,13 @@ function Auth({ status, onLogin, navigate }) {
   return <div className="auth-page"><header className="auth-header"><button className="plain" onClick={() => navigate('/')}><Logo/></button><span className="mono">SECURE FILE WORKSPACE</span></header><main className="auth-layout"><div className="auth-story"><div className="eyebrow mono">CIPHERVAULT / IDENTITY GATE</div><h1>Your files.<br/><em>Encrypted.</em><br/>Under control.</h1><p>Secure storage, deliberate access, and a record of every action across your workspace.</p><Scene compact/><div className="auth-points"><span><FileLock2 size={17}/> AES-256-GCM</span><span><KeyRound size={17}/> Six-digit TOTP</span><span><ShieldCheck size={17}/> Role checks</span></div></div><Card className="auth-card"><div className="auth-card-head"><span className="icon-tile"><LockKeyhole size={24}/></span><div className="eyebrow mono">{setup ? 'FIRST-TIME ENROLLMENT' : 'WORKSPACE AUTHENTICATION'}</div><h2>{setup ? 'Set Up Workspace' : 'Unlock Workspace'}</h2><p>{setup ? 'Create the first administrator and enroll an authenticator.' : 'Enter your password and a fresh authenticator code.'}</p></div><form onSubmit={submit}><ErrorBox error={error}/>{setup && <label>Bootstrap token<input required type="password" autoComplete="off" value={bootstrap} onChange={e => { setBootstrap(e.target.value); setEnrollment(null) }} placeholder="Private setup token"/></label>}{enrollment && <div className="enrollment"><QRCodeSVG value={enrollment.uri} size={150} bgColor="#fff"/><div><strong>Scan with your authenticator</strong><p>Keep this setup key private. Enter the current six-digit code below.</p><code>{enrollment.secret}</code></div></div>}<label>{setup ? 'Administrator username' : 'Username'}<input required value={username} onChange={e => setUsername(e.target.value)} autoComplete="username" placeholder="Your account identifier"/></label><label>Password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete={setup ? 'new-password' : 'current-password'} placeholder={setup ? 'At least 12 characters' : 'Enter your password'}/></label>{(!setup || enrollment) && <label>Authenticator code<input required inputMode="numeric" pattern="[0-9]{6}" maxLength="6" value={code} onChange={e => setCode(e.target.value.replace(/\D/g,''))} placeholder="6-digit code"/></label>}<Button className="primary full" disabled={busy}>{busy ? 'Please wait…' : setup ? enrollment ? 'Create secure workspace' : 'Verify setup token' : 'Unlock workspace'} <ArrowRight size={18}/></Button></form><p className="auth-help">No public signup. Lost access? Contact your workspace administrator.</p></Card></main></div>
 }
 
-function Shell({ session, page, navigate, request, onLogout }) {
+function Shell({ session, page, navigate, request, onLogout, sessionError }) {
   const [mobile, setMobile] = useState(false)
   const visible = routes.filter(([id]) => session.user.role === 'Admin' || !['team','audit','monitor'].includes(id))
   const content = { dashboard: Dashboard, vault: FileVault, team: Team, audit: Audit, monitor: Monitor, guide: Guide, account: Account }
   const allowedPage = visible.some(([id]) => id === page) ? page : 'dashboard'
   const Current = content[allowedPage]
-  return <div className="app-shell"><aside className={'sidebar' + (mobile ? ' open' : '')}><div className="sidebar-brand"><Logo/><span className="mono">SECURE FILE WORKSPACE <i className="live-dot"/></span></div><nav aria-label="Workspace navigation">{visible.map(([id, name, Icon]) => <button key={id} className={'nav-item' + (page === id ? ' active' : '')} onClick={() => { navigate('/app/' + id); setMobile(false) }}><Icon size={19}/>{name}{id === 'vault' && <Tag>LIVE</Tag>}</button>)}</nav><div className="sidebar-bottom"><Card className="engine-card"><span className="mono">VAULT STATUS</span><strong><span className="live-dot"/> ENCRYPTION ENABLED</strong><small>AES-256-GCM</small></Card><Button className="full" onClick={onLogout}><LogOut size={17}/> Lock & sign out</Button></div></aside><div className="shell-main"><header className="topbar"><button className="mobile-menu plain" aria-label="Open menu" onClick={() => setMobile(!mobile)}><Menu size={22}/></button><div className="topbar-context mono">CIPHERVAULT / {page.toUpperCase()}</div><div className="topbar-user"><span className="avatar"><UserRound size={18}/></span><div><strong>{session.user.username}</strong><small className="mono">{session.user.role.toUpperCase()}</small></div></div></header><main className="app-content"><Current session={session} request={request} navigate={navigate} onLogout={onLogout}/></main></div>{mobile && <button className="mobile-backdrop" aria-label="Close menu" onClick={() => setMobile(false)}/>}</div>
+  return <div className="app-shell"><aside className={'sidebar' + (mobile ? ' open' : '')}><div className="sidebar-brand"><Logo/><span className="mono">SECURE FILE WORKSPACE <i className="live-dot"/></span></div><nav aria-label="Workspace navigation">{visible.map(([id, name, Icon]) => <button key={id} className={'nav-item' + (page === id ? ' active' : '')} onClick={() => { navigate('/app/' + id); setMobile(false) }}><Icon size={19}/>{name}{id === 'vault' && <Tag>LIVE</Tag>}</button>)}</nav><div className="sidebar-bottom"><Card className="engine-card"><span className="mono">VAULT STATUS</span><strong><span className="live-dot"/> ENCRYPTION ENABLED</strong><small>AES-256-GCM</small></Card><Button className="full" onClick={onLogout}><LogOut size={17}/> Lock & sign out</Button></div></aside><div className="shell-main"><header className="topbar"><button className="mobile-menu plain" aria-label="Open menu" onClick={() => setMobile(!mobile)}><Menu size={22}/></button><div className="topbar-context mono">CIPHERVAULT / {page.toUpperCase()}</div><div className="topbar-user"><span className="avatar"><UserRound size={18}/></span><div><strong>{session.user.username}</strong><small className="mono">{session.user.role.toUpperCase()}</small></div></div></header><main className="app-content"><ErrorBox error={sessionError}/><Current session={session} request={request} navigate={navigate} onLogout={onLogout}/></main></div>{mobile && <button className="mobile-backdrop" aria-label="Close menu" onClick={() => setMobile(false)}/>}</div>
 }
 
 function Dashboard({ session, navigate }) {
@@ -169,13 +169,26 @@ function Guide({session}) {
 
 export default function App() {
   const [path,setPath]=useState(location.pathname),[status,setStatus]=useState(null),[session,setSession]=useState(null),[ready,setReady]=useState(false),[error,setError]=useState('')
+  const [logoutError,setLogoutError]=useState('')
   useEffect(()=>{Promise.all([api('/status'),api('/session').catch(()=>null)]).then(([s,u])=>{setStatus(s);setSession(u)}).catch(e=>setError(e.message)).finally(()=>setReady(true));const pop=()=>setPath(location.pathname);window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop)},[])
   const navigate=target=>{history.pushState(null,'',target);setPath(target);window.scrollTo({top:0,behavior:'instant'})}
   const request=(p,opts={})=>api(p,{...opts,csrf:session?.csrf})
-  const onLogout=async()=>{try{await request('/logout',{method:'POST'})}catch{/* clear local view even if expired */}setSession(null);navigate('/signin')}
+  const onLogout=async()=>{
+    setLogoutError('')
+    try { await request('/logout',{method:'POST'}) }
+    catch(error) {
+      if(error.status!==401) {
+        setLogoutError('Sign-out failed. Check your connection and try again. Your session has not been ended.')
+        return
+      }
+    }
+    setSession(null)
+    navigate('/signin')
+  }
+
   if(!ready)return <Loading/>
   if(error)return <div className="fatal"><Logo/><ErrorBox error={error}/><p>Configure the server secrets, then reload.</p></div>
   if(path==='/')return <Landing navigate={navigate}/>
   if(path==='/signin'||!session)return <Auth status={status} navigate={navigate} onLogin={s=>{setSession(s);navigate('/app/dashboard')}}/>
-  return <Shell session={session} page={path.split('/')[2]||'dashboard'} navigate={navigate} request={request} onLogout={onLogout}/>
+  return <Shell sessionError={logoutError} session={session} page={path.split('/')[2]||'dashboard'} navigate={navigate} request={request} onLogout={onLogout}/>
 }
