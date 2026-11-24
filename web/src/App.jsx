@@ -3,6 +3,9 @@ import { QRCodeSVG } from 'qrcode.react'
 import { Activity, ArrowRight, BadgeCheck, Check, ChevronRight, CircleAlert, Copy, Download, Eye, FileKey2, FileLock2, FileText, Fingerprint, FolderLock, HardDrive, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Menu, Pause, Play, RefreshCw, Search, Settings2, Shield, ShieldAlert, ShieldCheck, Sparkles, UploadCloud, UserRound, Users, X } from 'lucide-react'
 import { api, kind, size, when } from './api.js'
 import { useResource } from './useResource.js'
+import CursorGlow from './CursorGlow.jsx'
+import CryptoComparison from './CryptoComparison.jsx'
+import ActivityResults from './ActivityResults.jsx'
 
 const VaultScene = lazy(() => import('./VaultScene.jsx'))
 function Scene(props) { return <Suspense fallback={<div className="scene-shell scene-loading">Loading vault illustration…</div>}><VaultScene {...props}/></Suspense> }
@@ -36,7 +39,7 @@ function Landing({ navigate }) {
     return () => observer.disconnect()
   }, [])
   return <div className="landing">
-    <header className="site-nav"><Logo/><nav><a href="#features">Features</a><a href="#workflow">How it works</a><a href="#security">Security</a></nav><Button onClick={() => navigate('/signin')}>Open vault <ArrowRight size={16}/></Button></header>
+    <header className="site-nav"><Logo/><nav><a href="#features">Features</a><a href="#workflow">How it works</a><a href="#security">Security</a><a href="#cryptography">Cryptography</a></nav><Button onClick={() => navigate('/signin')}>Open vault <ArrowRight size={16}/></Button></header>
     <main>
       <section className="hero wrap"><div className="hero-copy"><div className="eyebrow mono"><span className="live-dot"/> SECURE REMOTE FILE WORKSPACE</div><h1>Keep your files private.<br/><em>Keep access intentional.</em></h1><p>Encrypted storage, authenticator-based sign-in, and role-checked file access in one focused workspace.</p><div className="hero-actions"><Button className="primary" onClick={() => navigate('/signin')}>Open your workspace <ArrowRight size={18}/></Button><a className="btn ghost" href="#workflow">Explore how it works <ChevronRight size={17}/></a></div><div className="hero-proof"><span><LockKeyhole size={15}/> Password + TOTP</span><span><ShieldCheck size={15}/> Server-side permissions</span><span><Fingerprint size={15}/> SHA-256 verification</span></div></div><div className="hero-visual"><Scene/><div className="hero-visual-foot mono"><span>ENCRYPTED FILE CORE</span><span>ILLUSTRATIVE 3D SCENE</span></div></div></section>
       <section id="features" className="section wrap"><div className="section-intro reveal"><div className="eyebrow mono">FOUR LAYERS OF CONTROL</div><h2>Security you can demonstrate.</h2><p>Each layer protects a different part of the file workflow.</p></div><div className="feature-grid">{[
@@ -51,6 +54,7 @@ function Landing({ navigate }) {
         ['03', 'Verify before use', 'Authenticated decryption and SHA-256 comparison detect changed content.'],
       ].map(([n, title, text]) => <div className="showcase-step reveal" key={n}><span className="mono">{n}</span><div><h3>{title}</h3><p>{text}</p></div></div>)}</div></div></div></section>
       <section id="security" className="section wrap"><div className="section-intro reveal"><div className="eyebrow mono">ROLE-BASED ACCESS</div><h2>Every role has a boundary.</h2><p>The interface reflects permissions; the server enforces them for every action.</p></div><div className="role-grid">{[['Admin','All files, account management, audit and monitoring'],['Employee','Own and shared files; upload and download'],['Guest','Shared file metadata only; no downloads']].map(([role, desc]) => <Card className="role-card reveal" key={role}><Tag tone={role === 'Admin' ? 'violet' : role === 'Guest' ? 'muted' : 'cyan'}>{role.toUpperCase()}</Tag><h3>{role}</h3><p>{desc}</p></Card>)}</div><p className="security-note reveal"><CircleAlert size={17}/> This is an educational prototype. Server operators who hold the master key can decrypt data. VPN-only access requires host network setup.</p></section>
+      <section id="cryptography" className="section wrap"><CryptoComparison/></section>
       <section className="cta-section"><div className="wrap cta-content reveal"><div><div className="eyebrow mono">READY TO BEGIN?</div><h2>Open a more deliberate file workspace.</h2><p>Set up your administrator account or sign in to an existing vault.</p></div><Button className="primary" onClick={() => navigate('/signin')}>Open CipherVault <ArrowRight size={18}/></Button></div></section>
     </main><footer className="site-footer wrap"><Logo/><span>Secure Remote File Vault · Educational prototype</span><a href="#security">Security notes</a></footer>
   </div>
@@ -143,13 +147,26 @@ function Audit({ request }) {
 
 function Monitor() {
   const {data,error,busy,refresh}=useResource('/monitoring')
-  const [demo,setDemo]=useState(null),[demoError,setDemoError]=useState('')
+  const [demo,setDemo]=useState(null),[demoError,setDemoError]=useState(''),[demoBusy,setDemoBusy]=useState(false)
+  const runDemo = async () => {
+    setDemoError(''); setDemoBusy(true)
+    try { setDemo(await api('/monitoring/demo')) }
+    catch(e) { setDemoError(e.message) }
+    finally { setDemoBusy(false) }
+  }
   if (!busy && !data) return <LoadFailure error={error} retry={refresh}/>
-  return <><PageHeading eyebrow="SECURITY OPERATIONS / LOCAL ANALYSIS" title="AI Threat & Anomaly Monitoring" description="Isolation Forest reviews completed five-minute audit activity windows." actions={<Button className="primary" onClick={()=>api('/monitoring/demo').then(setDemo).catch(e=>setDemoError(e.message))}><Sparkles size={17}/> Run synthetic demo</Button>}/><ErrorBox error={error||demoError}/><div className="notice"><CircleAlert size={17}/> Alerts support investigation. They do not automatically block accounts or prove an attack.</div>{busy?<Loading/>:<><div className="metric-grid"><Metric label="BASELINE WINDOWS" value={data.training_windows} detail="Earlier completed windows" icon={Activity}/><Metric label="EVALUATED WINDOWS" value={data.results.length} detail="Later completed windows" icon={Fingerprint}/><Metric label="UNUSUAL WINDOWS" value={data.results.filter(r=>r.anomalous).length} detail="Review alongside the audit trail" icon={ShieldAlert} tone="violet"/><Metric label="MODEL" value={data.ready?'READY':'WAITING'} detail="Requires 30 varied baseline windows" icon={Sparkles}/></div><Card className="large-panel"><div className="panel-title"><h2>Real vault activity</h2><Tag tone={data.ready?'green':'muted'}>{data.ready?'ANALYSIS READY':'BASELINE NEEDED'}</Tag></div><p>{data.message}</p>{data.ready&&<Results rows={data.results}/>}</Card><Card className="large-panel demo-panel"><div className="panel-title"><div><div className="eyebrow mono">ISOLATED LAB</div><h2>Synthetic AI demonstration</h2></div><Tag tone="violet">SAMPLE DATA</Tag></div><p>Generated examples are separate from the real audit database. They demonstrate model behavior, not detection accuracy.</p>{demo?<Results rows={demo}/>:<Empty title="Run the sample scenarios" detail="Compare normal activity with a download burst and login failures."/>}</Card></>}</>
+  return <><PageHeading eyebrow="SECURITY OPERATIONS / LOCAL ANALYSIS" title="AI Threat & Anomaly Monitoring" description="Investigate completed five-minute activity windows with local Isolation Forest analysis." actions={<><Button onClick={refresh} disabled={busy}><RefreshCw size={17}/> Refresh activity</Button><Button className="primary" disabled={demoBusy} onClick={runDemo}><Sparkles size={17}/>{demoBusy ? 'Analyzing samples…' : 'Run synthetic demo'}</Button></>}/>
+    <ErrorBox error={error||demoError}/>
+    <div className="monitor-explainer"><ShieldCheck size={22}/><div><strong>Local analysis. Evidence you can inspect.</strong><p>Only audit metadata is analyzed. File contents stay out of the model. Alerts support investigation and do not automatically block accounts or prove an attack.</p></div></div>
+    {busy?<Loading/>:<>
+      <div className="metric-grid"><Metric label="BASELINE WINDOWS" value={data.training_windows} detail="Earlier completed windows" icon={Activity}/><Metric label="EVALUATED WINDOWS" value={data.results.length} detail="Later completed windows" icon={Fingerprint}/><Metric label="UNUSUAL WINDOWS" value={data.results.filter(r=>r.anomalous).length} detail="Review alongside the audit trail" icon={ShieldAlert} tone="violet"/><Metric label="MODEL" value={data.ready?'READY':'WAITING'} detail="Requires 30 varied baseline windows" icon={Sparkles}/></div>
+      <Card className="large-panel"><div className="panel-title"><div><h2>Real vault activity</h2><span className="subtle">Newest completed windows first · five minutes per actor</span></div><Tag tone={data.ready?'green':'muted'}>{data.ready?'ANALYSIS READY':'BASELINE NEEDED'}</Tag></div><p>{data.message}</p>
+        {data.ready ? <ActivityResults rows={data.results}/> : <div className="baseline-state"><Activity size={25}/><div><h3>Building your activity baseline</h3><p>{data.training_windows} baseline windows collected. The model needs at least 30 with varied activity. Continue using the vault or explore the separate sample scenarios below.</p></div></div>}
+      </Card>
+      <Card className="large-panel demo-panel"><div className="panel-title"><div><h2>Synthetic AI demonstration</h2><span className="subtle">Normal activity, download burst, and repeated login failures</span></div><Tag tone="violet">SAMPLE DATA</Tag></div><p>Generated examples stay separate from the real audit database. They demonstrate model behavior, not detection accuracy.</p>{demo?<ActivityResults rows={demo} synthetic/>:<Empty title="Run the sample scenarios" detail="Use Run synthetic demo to inspect example signals and decision scores."/>}</Card>
+    </>}
+  </>
 }
-
-function Results({rows}) { return <div className="result-grid">{rows.map((r,i)=><Card className={'result-card '+(r.anomalous?'alert':'')} key={i}><Tag tone={r.anomalous?'red':'green'}>{r.anomalous?'REVIEW ACTIVITY':'WITHIN BASELINE'}</Tag><h3>{r.actor}</h3><div className="result-stats"><span>Downloads <strong>{r.downloads}</strong></span><span>Failed logins <strong>{r.failed_logins}</strong></span><span>Denied actions <strong>{r.denied_actions}</strong></span></div><p>{r.signals}</p><small className="mono">Decision score: {r.decision_score}</small></Card>)}</div> }
-
 function Account({session,request,onLogout}) {
   const {data,error,busy,refresh}=useResource('/sessions')
   const [notice,setNotice]=useState(''),[actionError,setActionError]=useState('')
@@ -164,10 +181,10 @@ function Guide({session}) {
     [FileLock2,'Confidentiality','A new AES-256-GCM key encrypts each file. RSA-3072 OAEP protects that key; the master key protects the private key.'],
     [Fingerprint,'Integrity','GCM authentication and SHA-256 plaintext comparison run before a download or explicit integrity check succeeds.'],
     [FileKey2,'Audit evidence','Audit events are HMAC chained. Save checkpoints separately to help detect database rollback.'],
-  ].map(([Icon,title,detail])=><Card className="guide-card" key={title}><Icon size={26}/><h2>{title}</h2><p>{detail}</p></Card>)}</div><Card className="guide-limit"><CircleAlert size={23}/><div><h2>Important limits</h2><p>This is an educational prototype, not an independently audited enterprise vault. Server operators with the master key can decrypt files. File names, ownership, sizes, and hashes are plaintext metadata. The app analyzes audit metadata locally; it does not inspect document content or automatically block accounts.</p></div></Card></>
+  ].map(([Icon,title,detail])=><Card className="guide-card" key={title}><Icon size={26}/><h2>{title}</h2><p>{detail}</p></Card>)}</div><section className="guide-comparison"><CryptoComparison/></section><Card className="guide-limit"><CircleAlert size={23}/><div><h2>Important limits</h2><p>This is an educational prototype, not an independently audited enterprise vault. Server operators with the master key can decrypt files. File names, ownership, sizes, and hashes are plaintext metadata. The app analyzes audit metadata locally; it does not inspect document content or automatically block accounts.</p></div></Card></>
 }
 
-export default function App() {
+function AppContent() {
   const [path,setPath]=useState(location.pathname),[status,setStatus]=useState(null),[session,setSession]=useState(null),[ready,setReady]=useState(false),[error,setError]=useState('')
   const [logoutError,setLogoutError]=useState('')
   useEffect(()=>{Promise.all([api('/status'),api('/session').catch(()=>null)]).then(([s,u])=>{setStatus(s);setSession(u)}).catch(e=>setError(e.message)).finally(()=>setReady(true));const pop=()=>setPath(location.pathname);window.addEventListener('popstate',pop);return()=>window.removeEventListener('popstate',pop)},[])
@@ -192,3 +209,5 @@ export default function App() {
   if(path==='/signin'||!session)return <Auth status={status} navigate={navigate} onLogin={s=>{setSession(s);navigate('/app/dashboard')}}/>
   return <Shell sessionError={logoutError} session={session} page={path.split('/')[2]||'dashboard'} navigate={navigate} request={request} onLogout={onLogout}/>
 }
+
+export default function App() { return <><CursorGlow/><AppContent/></> }
