@@ -1,5 +1,5 @@
 import React from 'react'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.jsx'
 import { api } from './api.js'
@@ -18,6 +18,47 @@ beforeEach(() => {
   globalThis.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} }
 })
 afterEach(cleanup)
+
+it('keeps landing content available without IntersectionObserver', async () => {
+  window.history.replaceState(null, '', '/')
+  const observer = globalThis.IntersectionObserver
+  delete globalThis.IntersectionObserver
+  backend(async () => undefined)
+  render(<App/>)
+  await screen.findByRole('heading', { name: /Your files/ })
+  expect(screen.getByRole('heading', { name: 'Security you can demonstrate.' })).toBeTruthy()
+  globalThis.IntersectionObserver = observer
+})
+
+it('exposes mobile navigation state, traps focus and closes with Escape', async () => {
+  window.history.replaceState(null, '', '/app/account')
+  backend(async path => path === '/sessions' ? [] : undefined)
+  render(<App/>)
+  const menu = await screen.findByRole('button', { name: 'Open menu' })
+  fireEvent.click(menu)
+  expect(menu.getAttribute('aria-expanded')).toBe('true')
+  expect(document.activeElement.getAttribute('aria-label')).toBe('Close navigation')
+  fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
+  expect(document.activeElement.textContent).toContain('Lock & sign out')
+  fireEvent.keyDown(document, { key: 'Escape' })
+  expect(menu.getAttribute('aria-expanded')).toBe('false')
+  expect(document.activeElement).toBe(menu)
+  expect(document.body.style.overflow).toBe('')
+})
+
+it('releases the drawer and scroll lock when resized to desktop', async () => {
+  let resize
+  window.matchMedia = vi.fn(query => ({ matches: false, addEventListener: (_, fn) => { if (query === '(min-width: 801px)') resize = fn }, removeEventListener: vi.fn() }))
+  window.history.replaceState(null, '', '/app/account')
+  backend(async path => path === '/sessions' ? [] : undefined)
+  render(<App/>)
+  const menu = await screen.findByRole('button', { name: 'Open menu' })
+  fireEvent.click(menu)
+  expect(document.body.style.overflow).toBe('hidden')
+  act(() => resize({ matches: true }))
+  expect(menu.getAttribute('aria-expanded')).toBe('false')
+  expect(document.body.style.overflow).toBe('')
+})
 
 function backend(resource, logout = async () => ({ signed_out: true })) {
   api.mockImplementation(async (path, options) => {

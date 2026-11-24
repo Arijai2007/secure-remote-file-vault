@@ -1,8 +1,10 @@
 # CipherVault — Secure Remote File Vault
 
-## Website UI (Stitch design adaptation)
+## Website UI (CodeInspectorAi reference adaptation)
 
-The `web/` frontend uses the supplied **Obsidian Bastion** Stitch export's palette, typography, sidebar, metrics, repository table, inspector, and page hierarchy. The landing page adds a locally rendered Three.js vault core and scroll reveals with a reduced-motion fallback. The ZIP's sample metrics and unsupported claims (client-side decryption, hardware tokens, automatic blocking, compliance certifications, and multi-node telemetry) are intentionally replaced with real vault data and accurate descriptions.
+The React/Vite `web/` frontend follows the approved **CodeInspectorAi** reference across the landing page, sign-in and workspace: near-black surfaces, mint (#3df5a7) actions, violet (#8b7bff) accents, locally bundled Inter and JetBrains Mono, restrained borders and compact panels. The landing page pairs its headline with a terminal-style sample file protection walkthrough. Its finite animation has pause/resume and replay controls, plus a static reduced-motion view; the sample is explicitly illustrative and processes no real file. Responsive navigation, tables and inspector layouts carry the same visual system into the workspace.
+
+The Streamlit demonstration retains its separate navy/cyan Stitch design and animated Three.js sign-in vault. It was not restyled by this React redesign. The current React hero uses the terminal walkthrough; the unused legacy React Three.js scene file is not rendered. Sample metrics and unsupported claims (client-side decryption, hardware tokens, automatic blocking, compliance certifications, and multi-node telemetry) remain excluded.
 
 The existing `vault.py` remains the security and persistence boundary. `web_api.py` exposes its operations on the same origin, using an HttpOnly session cookie and a per-session request token. `app.py` remains available as the Streamlit demonstration.
 
@@ -56,8 +58,9 @@ Read the bootstrap token from the newly created, ignored `.streamlit/secrets.tom
 - GCM authentication and SHA-256 plaintext verification before download; modified files are blocked.
 - SQLite stores encrypted file blobs and metadata transactionally. No filesystem paths are taken from uploads.
 - Audit dashboard and CSV export; search; storage metrics; account management; no external analytics.
-- Stitch-inspired navy workspace with cyan/violet accents, responsive file cards, a cryptographic inspector, dashboard file-type chart, and role-scoped recent activity.
-- Animated Three.js sign-in vault, bundled locally with pause, reduced-motion support and a WebGL fallback.
+- React website: CodeInspectorAi-inspired near-black/mint/violet landing, sign-in and workspace; responsive navigation, repository table, cryptographic inspector, dashboard file-type chart and role-scoped recent activity.
+- Illustrative React terminal walkthrough with finite staged animation, pause/resume, replay and static reduced-motion support.
+- Separate legacy Streamlit navy/cyan interface with responsive file cards and a locally bundled animated Three.js sign-in vault, pause control, reduced-motion support and WebGL fallback.
 - Batch integrity verification of filtered files, per-file failure reporting, and manifest refresh.
 - Search by filename/owner; filter by type, ownership and sharing; sort and paginate large file lists.
 - Owners and administrators can change file sharing. Integrity can be verified separately from downloading.

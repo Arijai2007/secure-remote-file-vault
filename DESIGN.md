@@ -1,165 +1,167 @@
 ---
 name: CipherVault
-description: Native Streamlit adaptation of the supplied CipherVault sign-in and file workspace.
+description: CodeInspectorAi reference adaptation for the React website; separate legacy Streamlit surface.
 colors:
-  canvas: "#0e1321"
-  nav: "#090e1c"
-  panel: "#1a1f2e"
-  raised: "#252a39"
-  ink: "#dee2f6"
-  muted: "#a6b4ca"
-  cyan: "#22d3ee"
-  violet: "#d0bcff"
-  border: "#30394e"
-  success: "#62e0ba"
+  canvas: "#07090d"
+  nav: "#090c11"
+  panel: "#0f131a"
+  raised: "#141924"
+  ink: "#e8edf4"
+  muted: "#a1aaba"
+  soft: "#b4bcc8"
+  mint: "#3df5a7"
+  violet: "#8b7bff"
+  border: "#2b323e"
+  action-ink: "#04140d"
   danger: "#ffb4ab"
 typography:
   display:
-    fontFamily: "Space Grotesk, sans-serif"
-    fontSize: "clamp(2.25rem, 3.4vw, 3.8rem)"
-    lineHeight: 1.1
-    letterSpacing: "-.025em"
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "clamp(3.4rem, 5.2vw, 4.5rem)"
+    fontWeight: 800
+    lineHeight: 1.06
+    letterSpacing: "-.04em"
   headline:
-    fontFamily: "Space Grotesk, sans-serif"
-    fontSize: "1.85rem"
-    letterSpacing: "-.025em"
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "clamp(1.9rem, 3vw, 2.55rem)"
+    fontWeight: 750
+    lineHeight: 1.18
   title:
-    fontFamily: "Space Grotesk, sans-serif"
-    fontSize: "1.15rem"
-    letterSpacing: "-.025em"
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "1.05rem"
+    letterSpacing: "-.035em"
   body:
-    fontFamily: "Inter, sans-serif"
-    lineHeight: 1.6
+    fontFamily: "Inter, Arial, sans-serif"
+    lineHeight: 1.55
   mono:
     fontFamily: "JetBrains Mono, monospace"
 rounded:
-  control: "8px"
-  input: "9px"
-  inset: "12px"
-  card: "16px"
-  feature: "18px"
-  form: "20px"
+  control: "9px"
+  card: "14px"
+  navigation: "8px"
+  tag: "5px"
 spacing:
-  inline: "12px"
-  inset: "1rem"
-  card: "1.25rem"
-  form: "1.8rem"
-  feature: "2rem"
+  card: "20px"
+  compact-card: "16px"
+  button: "10px 15px"
 components:
+  button-primary:
+    backgroundColor: "{colors.mint}"
+    textColor: "{colors.action-ink}"
+    rounded: "{rounded.control}"
+    padding: "{spacing.button}"
   button-secondary:
     backgroundColor: "{colors.raised}"
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
+    padding: "{spacing.button}"
   input:
-    backgroundColor: "{colors.nav}"
+    backgroundColor: "#0b0e14"
     textColor: "{colors.ink}"
-    rounded: "{rounded.input}"
-  navigation-active:
-    backgroundColor: "{colors.cyan}"
-    textColor: "#00252e"
     rounded: "{rounded.control}"
-    padding: ".65rem .8rem"
-  file-card:
+    padding: "0 12px"
+  card:
     backgroundColor: "{colors.panel}"
     rounded: "{rounded.card}"
+    padding: "{spacing.card}"
 ---
 
 # Design System: CipherVault
 
 ## Overview
 
-The visual authority is the user-supplied `stitch_ciphervault_ui_design_system.zip`: the File Vault and animated Sign In / Unlock screens. This implementation adapts the export to native Streamlit controls and real vault data. Navy surfaces, cyan actions, violet accents, geometric headings and monospaced cryptographic metadata carry the supplied identity. No additional creative metaphor is established.
+The React website follows the user-approved CodeInspectorAi reference: near-black surfaces, mint actions, violet accents, Inter headings and JetBrains Mono technical labels. This is an explicitly pinned reference adaptation, with no additional creative concept. Its grid atmosphere, restrained borders and terminal presentation connect the landing page, authentication and signed-in workspace.
 
-The sign-in illustration and workspace lock artwork carry the vault motif; working controls stay native Streamlit widgets. Sources of truth are `ui.css`, `ui.py`, `.streamlit/config.toml` and the layout in `app.py`. Product and security facts remain in `README.md` and `vault.py`.
+The current website sources of truth are `web/src/styles.css`, `web/src/App.jsx` and `web/src/VaultTerminal.jsx`. Frontmatter and the sidecar describe that React surface. Streamlit remains a separate supported legacy interface with its existing Stitch identity; its distinct system is recorded below. Product behavior and security claims remain governed by `PRODUCT.md`, `README.md`, `web_api.py` and `vault.py`.
 
 **Key Characteristics:**
 
-- Dark tonal layers with cyan interaction emphasis.
-- Rounded file cards, inset metadata and a separate cryptographic inspector.
-- Locally bundled type and an isolated animated sign-in vault.
-- Role-aware controls and truthful verification states.
+- Near-black tonal layers, mint interaction emphasis and restrained violet accents.
+- Compact bordered controls, rounded panels and readable technical metadata.
+- Locally bundled fonts and clearly illustrative terminal motion.
+- Role-aware actions and truthful verification states across supported interfaces.
 
 ## Colors
 
-Frontmatter records the reused CSS custom properties. Gradients and interaction treatments remain in the sidecar component snippets.
-
 ### Primary
 
-- **Cyan:** actions, selected sidebar rows, caret, keyboard focus and illustrative highlights.
+- **Mint:** primary actions, focus rings, active navigation, successful walkthrough steps and upload emphasis. The existing CSS custom property `--cyan` now contains this mint value; its historical name does not indicate the visible hue.
 
 ### Secondary
 
-- **Violet:** the primary-action gradient endpoint and sharing/role accent family.
+- **Violet:** secondary illustration accents, technical highlights and sharing/role badges. The hero heading blends mint through pale blue into violet.
 
 ### Neutral
 
-- **Canvas / Nav:** page backdrop and darker sidebar, fields and metadata insets.
-- **Panel / Raised:** cards and forms, then secondary controls.
-- **Ink / Muted:** primary text, then captions and metadata labels.
-- **Border:** separation between controls and surfaces.
-- **Success / Danger:** activity outcomes, paired with visible outcome text.
+- **Canvas / Nav:** page backdrop and darker sidebar or authentication fields.
+- **Panel / Raised:** bordered containers, metric gradients and secondary controls.
+- **Ink / Muted / Soft:** primary content, supporting text and quieter control labels.
+- **Border:** structural separation in forms, tables and panels.
+- **Action Ink / Danger:** dark text on mint actions; readable destructive and failure states paired with visible labels.
+
+**The Truthful State Rule.** Decorative sample states never substitute for a real verification result or operational metric.
 
 ## Typography
 
-Space Grotesk carries headings, the wordmark and metric values; Inter carries controls and prose; JetBrains Mono carries code, protocol names and cryptographic values. Latin font subsets are bundled with their SIL Open Font Licenses. System fallbacks cover other scripts.
+Inter supplies the wordmark, headings, controls, prose and metric values. JetBrains Mono supplies terminal text, protocol names, hashes and other technical metadata. Both font families are bundled locally with their licenses. There is no Space Grotesk heading role in the current React surface.
 
-Display type belongs to the sign-in story; at the narrow breakpoint it becomes a fixed size (2.4rem). Headline and title roles describe standard h2 and h3, with component-specific overrides for form titles and file names. The page h1 is smaller (1.65rem). Cryptographic values and metrics use tabular numerals. Story prose is constrained (52ch); long filenames and metadata wrap rather than truncate identifiers.
+Hero display type is bold and closely spaced; section headings are smaller and lighter. Workspace page headings use a compact responsive range (1.7rem to 2.2rem), with narrow-screen overrides. Body prose has generous line height, while terminal labels and table metadata are compact. Metric values and technical table cells use tabular numerals. Long filenames and hashes wrap in dedicated content areas; user identity text in the topbar truncates to protect controls.
 
 ## Layout
 
-The content container caps its width (1520px), with desktop padding (4rem 2rem 2rem). Sign-in uses story/credentials columns (1.35:1); the file vault uses listing/inspector columns (1.8:1), with Streamlit's large gap. Metrics, search, filters and tools precede the file list. Streamlit handles narrow-screen column stacking and the collapsible sidebar.
+The public page uses a centered content wrapper (1244px maximum, including padding), sticky navigation (70px desktop height), and generous section spacing (88px vertically). Its first viewport pairs the headline and actions with a terminal walkthrough in two columns. A subtle grid (56px cells) and localized mint/violet illumination sit behind landing and authentication content. Authentication pairs an identity story and compact terminal with the existing setup/login form. The form heading stands on its own without an eyebrow. Story heading line breaks remain on phones, and its small protection labels wrap horizontally.
 
-At the first CSS breakpoint (1000px), horizontal padding decreases and the protocol strip becomes one column. At the narrow breakpoint (760px), padding tightens further, identity/file headings wrap, the footer stacks and inspector/form padding decreases. The banner lock becomes subdued behind text. These CSS thresholds do not define Streamlit's column-stacking threshold.
+The workspace uses a sidebar (260px) and flexible main column, a quiet topbar (69px), metrics, filters, scrollable tables and a file inspector. The desktop listing/inspector grid uses a 1.9fr / .9fr balance with a minimum inspector width (270px); medium widths stack it. Tables retain their own horizontal scrolling rather than widening the page.
+
+At 1000px the landing hero stacks and loses its perspective tilt. At 800px authentication stacks, its compact terminal is hidden, and the sidebar becomes an off-canvas menu with a backdrop and close control. At 550px hero actions and feature cards stack; terminal protocol labels move below step descriptions, and workspace metrics retain two compact columns. Other rules at 1150px and 801–1250px adapt metrics, filters and inspector layout. Match the CSS cascade rather than treating one threshold as universal.
 
 ## Elevation & Depth
 
-Custom styling uses tonal layering, borders and gradients rather than box shadows. The banner and inspector use restrained navy gradients. Rendered depth belongs to the isolated sign-in scene, without prescribing shadows for ordinary controls.
+Depth comes mainly from tonal layering, fine borders and restrained gradients. The terminal uses a soft black shadow with a faint violet glow; authentication uses a quiet black shadow. Mint actions have a small accent shadow. The hero terminal has a desktop perspective tilt that settles on hover; it is removed on stacked layouts and for reduced motion. Ordinary workspace panels remain comparatively flat.
 
-Control transitions use short ease-out timing (180ms). Reduced-motion CSS disables transitions and animations. The scene separately honors reduced motion, offers pause/play, suspends when hidden, resizes and provides a WebGL-unavailable fallback.
+Short control transitions use roughly 200–300ms; the shared easing curve is `cubic-bezier(.16,1,.3,1)`. Reveal elements remain fully opaque at all times, with a one-time translation animation when observation is available. Reduced-motion styling suppresses animation, transition movement, smooth scrolling and hero tilt.
 
 ## Shapes
 
-Controls use compact rounded corners; file cards, feature surfaces and forms use progressively broader corners as recorded above. Sharing and role badges are small rounded capsules. Decorative lock geometry has its own larger curves. Upload and empty states use dashed outlines; metadata sits in a darker rounded inset.
+Panels use softly rounded corners (14px), controls use tighter corners (9px), selected navigation uses 8px, and tags use 5px. Terminal status icons are circular. The logo combines a mint/violet tile with a small geometric mark. Upload regions use dashed outlines; technical values use darker inset surfaces. These shapes distinguish function without relying on ornamental imagery.
 
 ## Components
 
-### Buttons
+### Buttons and fields
 
-Secondary controls use the raised surface, ink text and a border. Hover shifts toward blue with lighter text and border. Primary actions use a cyan-to-pale-cyan-to-violet gradient; primary button/form hover brightens it. Native Streamlit determines geometry not explicitly overridden; the custom minimum height is 2.65rem and the sign-in submit minimum is 3.2rem. Disabled ordinary buttons fade and use the unavailable cursor.
+Primary buttons use mint with dark text; secondary buttons use the raised surface; ghost buttons keep transparent backgrounds and visible borders. Common buttons have a minimum height (43px), with larger mobile hero actions. Hover lifts by a small amount and changes surface/border color. Keyboard focus uses an explicit mint outline (2px, offset 3px for buttons and links). Fields have a minimum height (42px), dark backgrounds, visible placeholders, a mint caret and a mint focus outline. Disabled buttons fade and retain an unavailable cursor.
 
-### Inputs / Fields
+### Navigation, tags and cards
 
-Fields use the nav surface and border, visible placeholders and a cyan caret. Explicit keyboard focus for buttons, inputs, links, summaries and radios uses a cyan outline (2px) offset from the edge (3px).
+Workspace navigation uses compact icon/label rows; the selected item has a translucent mint fill, mint text and a quiet mint border. Mobile navigation exposes its expanded state and closes through its own button or backdrop. Tags use text with semantic color, including violet sharing/role accents, mint success and red failures. Cards share the panel/border system; metrics use a raised-to-panel gradient. The inspector adds a subtle green-black gradient and wrapped digest blocks.
 
-### Navigation
+### Illustrative terminal
 
-The dark sidebar uses native radio navigation. Rows have padded rounded hit areas and a blue hover surface. A checked row is cyan with dark text and a semibold label. The native sidebar supplies its mobile collapse control.
+The landing terminal shows a sample document and four stages: validate access, encrypt the file, wrap the key and verify on retrieval. Every stage is present in the markup; the finite sequence advances every 900ms, then stops. Pause/resume is available during playback and replay after completion. Reduced motion presents all stages complete without playback controls. SAMPLE and “Illustrative walkthrough · no file is processed” make the illustration explicit. Authentication reuses a compact version on wider screens. No real credentials, secrets or files enter this illustration.
 
-### Chips
+The React landing page and sign-in no longer render a Three.js hero. The unused React scene file may remain in the repository; its presence does not make it part of the current composition.
 
-Team/role badges use pale violet on deep purple; private badges use pale cyan on dark teal. Visible text supplies meaning alongside color. The banner's outlined capsule is descriptive rather than interactive.
+### Separate legacy Streamlit surface
 
-### Cards / Containers
+Streamlit retains its supplied Stitch File Vault and Sign In / Unlock design; this React redesign did not restyle it. Its sources remain `ui.css`, `ui.py`, `.streamlit/config.toml` and `app.py`. Its palette uses navy canvas (#0e1321), darker navigation (#090e1c), panels (#1a1f2e), raised surfaces (#252a39), pale ink (#dee2f6), muted text (#a6b4ca), cyan (#22d3ee), pale violet (#d0bcff), borders (#30394e), success (#62e0ba) and danger (#ffb4ab). Space Grotesk carries its headings, wordmark and metrics; Inter carries UI/prose; JetBrains Mono carries technical metadata.
 
-File cards and metrics use the panel layer. Forms add a solid border and broader corners. Protection cards, empty states, expanders and upload regions share the palette with purpose-specific radii and spacing. The inspector uses a navy gradient shell and darker definition-list metadata rows.
+Legacy controls are native Streamlit widgets, with cyan-to-violet primary gradients, cyan checked radio navigation and focus outlines, 8px controls, 9px fields, 12px insets, 16px file cards, 18px feature surfaces and 20px forms. Its content container caps at 1520px. Story/form columns use a 1.35:1 ratio; file listing/inspector uses 1.8:1. Streamlit supplies column stacking and the sidebar collapse behavior; custom CSS thresholds at 1000px and 760px tighten padding, wrap headings and adjust supporting layouts. Legacy surfaces use tonal layering rather than custom box shadows; control transitions use 180ms ease-out.
 
-### Sign-in vault and assets
-
-The user-supplied Three.js scene runs in an isolated Streamlit component and receives no credentials, session token or vault data. The dependency and scene are bundled locally; there are no runtime CDN requests. `assets/vault-scene.js` adapts the supplied Stitch `ANIMATION_6` export. `assets/three.min.js` is Three.js r125, matching that export, with its MIT license. Fonts originate from Google Fonts (Space Grotesk, Inter, JetBrains Mono), with adjacent licenses. Inline icons are authored geometric SVGs embedded as data images to survive Streamlit HTML sanitization. No external image or avatar is required.
+Streamlit still uses the isolated animated sign-in vault in `assets/vault-scene.js`, adapted from the supplied Stitch `ANIMATION_6` export. Its local `assets/three.min.js` is Three.js r125 with the MIT license. It receives no credentials, session token or vault data, honors reduced motion, offers pause/play, suspends when hidden and includes a WebGL fallback. Legacy Space Grotesk, Inter and JetBrains Mono fonts retain their SIL Open Font Licenses. Authored geometric SVG icons survive Streamlit sanitization as data images. Preserve these assets and licenses independently of the React terminal.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** preserve the supplied navy/cyan/violet identity and established font roles.
-- **Do** retain native Streamlit actions and escaped file metadata.
-- **Do** describe SHA-256 values as upload metadata until live verification succeeds.
-- **Do** apply batch verification to all matching filtered files and report individual failures; keep guest controls metadata-only.
-- **Do** share these tokens and native widget styling across bootstrap, overview, account, team access, audit and security pages.
-- **Do** preserve local asset licenses, animation controls and the WebGL fallback.
+- **Do** carry the approved reference palette, type roles and compact geometry across the React landing, authentication and workspace.
+- **Do** keep all sample terminal activity visibly illustrative and honor reduced motion.
+- **Do** preserve visible focus, mobile navigation controls, scrollable tables and readable identifiers.
+- **Do** preserve each surface's local asset licenses and Streamlit's existing animation controls/fallback.
+- **Do** describe SHA-256 values as upload metadata until live verification succeeds; keep guest controls metadata-only and report individual verification failures.
 
 ### Don't:
 
-- **Don't** restore mockup sample users, a role switcher or artificial integrity badges.
-- **Don't** introduce unsupported hardware-enclave, FIPS or zero-knowledge claims; authentication and cryptography remain implemented by `vault.py`.
-- **Don't** treat the decorative vault scene as a security boundary or pass credentials or vault data into it.
+- **Don't** apply the React mint system to Streamlit without a separate redesign request.
+- **Don't** restore mockup sample users, role switchers, artificial integrity badges or invented live metrics.
+- **Don't** introduce unsupported hardware-enclave, FIPS, compliance or zero-knowledge claims; security remains implemented by `vault.py`.
+- **Don't** treat the illustrative terminal or legacy 3D vault as a security boundary.
