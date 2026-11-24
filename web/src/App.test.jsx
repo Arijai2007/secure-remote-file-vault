@@ -113,6 +113,34 @@ it('the default landing preview does not request a missing optional image', asyn
   expect(screen.queryByAltText('CipherVault file vault preview')).toBeNull()
 })
 
+it('explains all three crypto approaches without claiming illustrative figures are measured', async () => {
+  window.history.replaceState(null, '', '/')
+  backend(async () => undefined)
+  render(<App />)
+  await screen.findByRole('heading', { name: 'Three approaches. One protected file.' })
+  expect(screen.getByRole('columnheader', { name: 'RSA + ML-KEM' })).toBeTruthy()
+  expect(screen.getByText(/Illustrative performance indices/)).toBeTruthy()
+  expect(screen.getByText('Active in this vault')).toBeTruthy()
+})
+
+it('filters monitoring windows and reveals the evidence behind an alert', async () => {
+  window.history.replaceState(null, '', '/app/monitor')
+  const rows = [
+    { start: 1700000000, actor: 'alice', downloads: 3, failed_logins: 0, denied_actions: 0, download_bytes: 100, distinct_files: 2, decision_score: .1, anomalous: false, signals: 'Normal activity' },
+    { start: 1700000300, actor: 'bob', downloads: 150, failed_logins: 4, denied_actions: 4, download_bytes: 150000000, distinct_files: 100, decision_score: -.12, anomalous: true, signals: 'downloads: 150 (baseline median 3)' },
+  ]
+  backend(async path => path === '/monitoring' ? { ready: true, training_windows: 40, results: rows, message: 'Analysis ready' } : undefined)
+  render(<App />)
+  await screen.findByRole('textbox', { name: 'Search real activity' })
+  fireEvent.change(screen.getByRole('combobox', { name: 'Filter real activity' }), { target: { value: 'review' } })
+  expect(screen.queryByText('alice')).toBeNull()
+  fireEvent.click(screen.getByText('Inspect evidence'))
+  expect(screen.getByText('downloads: 150 (baseline median 3)')).toBeTruthy()
+  expect(screen.getByText(/Negative scores indicate model outliers/)).toBeTruthy()
+  fireEvent.change(screen.getByRole('textbox', { name: 'Search real activity' }), { target: { value: 'missing-user' } })
+  expect(screen.getByText('No matching activity')).toBeTruthy()
+})
+
 it('a failed download cannot keep a previous verification indicator', async () => {
   window.history.replaceState(null, '', '/app/vault')
   backend(async path => {
